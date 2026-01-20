@@ -50,13 +50,20 @@ function MapNavigator({ targetItem, getLatLng }) {
   return null;
 }
 
-function MapZoomControls({ items, getLatLng }) {
+function MapZoomControls({ items, getLatLng, orthoBounds }) {
   const map = useMap();
 
   const handleZoomIn = () => map.setZoom(map.getZoom() + 1);
   const handleZoomOut = () => map.setZoom(map.getZoom() - 1);
 
   const handleZoomToAll = () => {
+    // If ortho bounds exist, fit to those
+    if (orthoBounds) {
+      map.fitBounds(orthoBounds, { padding: [50, 50] });
+      return;
+    }
+
+    // Otherwise fit to items
     if (!items?.length) return;
 
     const latLngs = items
@@ -112,14 +119,16 @@ export function HwcMap({
   initialCenter = [0, 0],
   initialZoom = 2,
   minZoom = 2,
-  maxZoom = 18,
+  maxZoom,
   fitBoundsOnLoad = true,
 
   // Layers
   baseLayer,
   onBaseLayerChange,
   mapTilerKey,
-  mapTilerStyle = "satellite",
+
+  // Ortho overlay
+  orthoBounds,
 
   // Controls
   showControls = true,
@@ -134,8 +143,8 @@ export function HwcMap({
 }) {
   const [isMobile, setIsMobile] = useState(false);
 
-  // Default base layer: if MapTiler key exists, prefer satellite, else streets
-  const effectiveBaseLayer = baseLayer ?? (mapTilerKey ? "satellite" : "streets");
+  // Default base layer: if MapTiler key exists, prefer streets, else satellite
+  const effectiveBaseLayer = baseLayer ?? (mapTilerKey ? "streets" : "satellite");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -222,7 +231,7 @@ export function HwcMap({
         />
       )}
 
-      {showAttribution && <MapAttribution showMapTiler={Boolean(mapTilerKey)} />}
+      {showAttribution && <MapAttribution baseLayer={effectiveBaseLayer} />}
 
       <MapContainer
         center={initialCenter}
@@ -246,17 +255,18 @@ export function HwcMap({
           />
         )}
 
-        {effectiveBaseLayer === "satellite" && mapTilerKey && (
+        {effectiveBaseLayer === "satellite" && (
           <TileLayer
-            key="satellite"
-            url={`https://api.maptiler.com/maps/${mapTilerStyle}/{z}/{x}/{y}.jpg?key=${mapTilerKey}`}
-            attribution="&copy; MapTiler &copy; OpenStreetMap contributors"
+            key="satellite-esri"
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="&copy; Esri, Maxar, Earthstar Geographics"
+            maxZoom={19}
           />
         )}
 
         <FitBounds items={validItems} getLatLng={getLatLng} enabled={fitBoundsOnLoad} />
         <MapNavigator targetItem={targetItem} getLatLng={getLatLng} />
-        <MapZoomControls items={validItems} getLatLng={getLatLng} />
+        <MapZoomControls items={validItems} getLatLng={getLatLng} orthoBounds={orthoBounds} />
 
         {children}
 
