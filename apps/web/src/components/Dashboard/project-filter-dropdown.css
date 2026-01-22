@@ -1,0 +1,161 @@
+/* Project Filter Dropdown - App-specific filter UI */
+
+.project-filter__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.08));
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.project-filter__header span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--hdr-fg, #F5F7FA);
+}
+
+.project-filter__clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent, #EE2F27);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.project-filter__clear-btn:hover {
+  background: rgba(238, 47, 39, 0.1);
+}
+
+.project-filter__section {
+  padding: 1rem;
+  border-bottom: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.08));
+}
+
+.project-filter__section:last-of-type {
+  border-bottom: none;
+}
+
+.project-filter__section label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.project-filter__input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.08));
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  color: var(--hdr-fg, #F5F7FA);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.project-filter__input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.project-filter__input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--accent, #EE2F27);
+}
+
+.project-filter__tag-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.project-filter__add-btn {
+  background: var(--accent, #EE2F27);
+  border: none;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.project-filter__add-btn:hover:not(:disabled) {
+  background: #d42820;
+}
+
+.project-filter__add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.project-filter__tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.project-filter__tag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(238, 47, 39, 0.2);
+  border: 1px solid rgba(238, 47, 39, 0.3);
+  color: var(--hdr-fg, #F5F7FA);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.project-filter__tag-remove {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.project-filter__tag-remove:hover {
+  color: var(--hdr-fg, #F5F7FA);
+}
+
+.project-filter__tag-remove svg {
+  width: 10px;
+  height: 10px;
+}
+
+.project-filter__actions {
+  padding: 1rem;
+  border-top: 1px solid var(--hdr-border, rgba(255, 255, 255, 0.08));
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.project-filter__apply-btn {
+  width: 100%;
+  background: var(--accent, #EE2F27);
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.project-filter__apply-btn:hover {
+  background: #d42820;
+}

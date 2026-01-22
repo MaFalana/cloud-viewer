@@ -8,10 +8,11 @@
   ],
   "scripts": {
     "assets:sync": "node scripts/sync-assets.mjs",
-    "dev": "npm run dev:web & npm run dev:api",
+    "potree:sync": "node scripts/sync-potree.mjs",
+    "dev": "npm run potree:sync && npm run dev:web & npm run dev:api",
     "dev:web": "npm --workspace=@hwc/web run dev",
     "dev:api": "python -m uvicorn app.main:app --reload --app-dir apps/api",
-    "build": "npm --workspace=@hwc/web run build",
+    "build": "npm run potree:sync && npm --workspace=@hwc/web run build",
     "preview": "npm --workspace=@hwc/web run preview"
   },
   "dependencies": {
@@ -20,6 +21,8 @@
     "react-dom": "^19.2.3",
     "react-icons": "^5.5.0",
     "react-leaflet": "^5.0.0",
-    "react-leaflet-cluster": "^4.0.0"
+    "react-leaflet-cluster": "^4.0.0",
+    "georaster": "^1.6.0",
+    "georaster-layer-for-leaflet": "^3.10.0"
   }
 }

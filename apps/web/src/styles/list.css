@@ -1,0 +1,352 @@
+/* List View Container */
+.list-view-container {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 1.5rem;
+  background: #1a1c20;
+}
+
+/* Bulk Actions Bar */
+.bulk-actions-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(238, 47, 39, 0.15);
+  backdrop-filter: saturate(120%) blur(8px);
+  border: 1px solid rgba(238, 47, 39, 0.3);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.bulk-selection-count {
+  color: var(--hdr-fg);
+  font-weight: 500;
+  font-size: 0.875rem;
+  flex: 1;
+}
+
+.bulk-delete-btn,
+.bulk-clear-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.bulk-delete-btn {
+  background: var(--hwc-red);
+  color: white;
+}
+
+.bulk-delete-btn:hover:not(:disabled) {
+  background: #d42820;
+}
+
+.bulk-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bulk-clear-btn {
+  background: transparent;
+  color: var(--hdr-fg);
+  border: 1px solid var(--hdr-border);
+}
+
+.bulk-clear-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Delete Progress Bar */
+.delete-progress-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 1rem;
+  background: rgba(26, 28, 32, 0.95);
+  backdrop-filter: saturate(120%) blur(8px);
+  border: 1px solid var(--hdr-border);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.delete-progress-info {
+  color: var(--hdr-fg);
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--hwc-red);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+/* Table */
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--hdr-border);
+}
+
+/* Table Header */
+.list-table thead {
+  background: rgba(0, 0, 0, 0.4);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: saturate(120%) blur(8px);
+}
+
+.list-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--hdr-fg);
+  border-bottom: 1px solid var(--hdr-border);
+}
+
+.table-header-checkbox {
+  width: 50px;
+  text-align: center;
+}
+
+.table-header-actions {
+  width: 60px;
+  text-align: center;
+}
+
+/* Table Body */
+.table-row {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.table-row:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.table-row:not(:last-child) td {
+  border-bottom: 1px solid var(--hdr-border);
+}
+
+.list-table td {
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: var(--hdr-fg);
+}
+
+/* Checkbox Column */
+.table-cell-checkbox {
+  width: 50px;
+  text-align: center;
+}
+
+.table-cell-checkbox input[type="checkbox"],
+.table-header-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--hwc-red);
+}
+
+/* ID Column */
+.table-cell-id {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+/* Name Column */
+.table-cell-name {
+  font-weight: 500;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--hdr-fg);
+}
+
+/* Client Column */
+.table-cell-client {
+  color: var(--hdr-fg);
+}
+
+/* Tags Column */
+.table-cell-tags {
+  max-width: 250px;
+}
+
+.table-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.table-tag {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 0.25rem;
+  font-weight: 400;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.table-empty {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Date Column */
+.table-cell-date {
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+/* Status Column */
+.table-cell-status {
+  min-width: 150px;
+  white-space: nowrap;
+}
+
+/* Actions Column */
+.table-cell-actions {
+  width: 80px;
+  text-align: center;
+  padding: 0.5rem !important;
+}
+
+.table-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.table-view-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  min-height: 32px;
+  text-decoration: none;
+  font-size: 1.125rem;
+}
+
+.table-view-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--hwc-red);
+}
+
+.table-menu-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.table-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--hdr-fg);
+}
+
+.table-menu-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .list-view-container {
+    padding: 1rem;
+  }
+
+  .list-table th,
+  .list-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .table-cell-name {
+    max-width: 200px;
+  }
+
+  .table-cell-tags {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide less important columns on mobile - keep checkbox, name, date, and actions */
+  .table-cell-id,
+  .table-header:nth-child(2) {
+    display: none;
+  }
+
+  .table-cell-client,
+  .table-header:nth-child(4) {
+    display: none;
+  }
+
+  .table-cell-tags,
+  .table-header:nth-child(5) {
+    display: none;
+  }
+  
+  .table-cell-status,
+  .table-header:nth-child(7) {
+    display: none;
+  }
+
+  /* Make name column take more space */
+  .table-cell-name {
+    max-width: none;
+  }
+}

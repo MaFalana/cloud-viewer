@@ -17,9 +17,11 @@ import { MapAttribution } from "./attribution.jsx";
 
 function FitBounds({ items, getLatLng, enabled = true }) {
   const map = useMap();
+  const hasRun = React.useRef(false);
 
   useEffect(() => {
     if (!enabled) return;
+    if (hasRun.current) return; // Only run once
     if (!items?.length) return;
 
     const latLngs = items
@@ -28,6 +30,7 @@ function FitBounds({ items, getLatLng, enabled = true }) {
 
     if (latLngs.length > 0) {
       map.fitBounds(latLngs, { padding: [50, 50] });
+      hasRun.current = true;
     }
   }, [map, items, getLatLng, enabled]);
 
@@ -154,7 +157,15 @@ export function HwcMap({
   const validItems = useMemo(() => {
     return (items || []).filter((it) => {
       const p = getLatLng(it);
-      return p && Number.isFinite(p[0]) && Number.isFinite(p[1]);
+      // Filter out invalid coordinates: null, undefined, non-finite, or (0, 0)
+      if (!p || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) {
+        return false;
+      }
+      // Exclude (0, 0) as it's typically a placeholder/invalid coordinate
+      if (p[0] === 0 && p[1] === 0) {
+        return false;
+      }
+      return true;
     });
   }, [items, getLatLng]);
 
@@ -216,10 +227,12 @@ export function HwcMap({
   };
 
   const layerOptions = useMemo(() => {
-    const opts = [{ key: "streets", label: "Streets" }];
-    if (mapTilerKey) opts.push({ key: "satellite", label: "Satellite" });
-    return opts;
-  }, [mapTilerKey]);
+    // Always show both options - satellite uses free ESRI, streets uses free OSM
+    return [
+      { key: "streets", label: "Streets" },
+      { key: "satellite", label: "Satellite" }
+    ];
+  }, []);
 
   return (
     <div className="map-wrapper">

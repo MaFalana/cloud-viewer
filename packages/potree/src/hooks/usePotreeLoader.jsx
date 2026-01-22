@@ -39,7 +39,7 @@ export function usePotreeLoader() {
 
     const loadPotree = async () => {
       try {
-        // Base path for Potree libs
+        // Base path for Potree libs (served from public directory)
         const basePath = '/potree/1.8.2';
         
         loadCSS(`${basePath}/build/potree/potree.css`);

@@ -1,0 +1,38 @@
+/* Dashboard Actions - App-specific styles */
+
+.dashboard-actions__create-btn {
+  background: var(--accent, #EE2F27);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dashboard-actions__create-btn:hover {
+  background: #d42820;
+}
+
+.dashboard-actions__create-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .dashboard-actions__create-btn span {
+    display: none;
+  }
+
+  .dashboard-actions__create-btn {
+    padding: 0.5rem;
+    min-width: 36px;
+  }
+}

@@ -39,7 +39,7 @@ export function useCesiumLoader() {
 
     const loadCesium = async () => {
       try {
-        // Base path for Cesium libs
+        // Base path for Cesium libs (served from public directory)
         const basePath = '/potree/1.8.2/libs/Cesium';
         
         loadCSS(`${basePath}/Widgets/CesiumWidget/CesiumWidget.css`);

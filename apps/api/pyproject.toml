@@ -3,9 +3,32 @@ name = "hwc-potree-api"
 version = "0.0.1"
 requires-python = ">=3.11"
 dependencies = [
+  # Web Framework
   "fastapi>=0.110",
   "uvicorn[standard]>=0.27",
-  "pydantic-settings>=2.0"
+  "pydantic-settings>=2.0",
+  "requests",
+  "python-multipart",
+  # Database and Storage
+  "pymongo",
+  "python-dotenv",
+  "azure-storage-blob",
+  # Point Cloud Processing
+  "laspy[lazrs,laszip]",
+  "pyproj",
+  "open3d",
+  "numpy",
+  "pandas",
+  "Pillow",
+  # Geospatial Processing
+  "GDAL>=3.8.0,<4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-asyncio",
+  "httpx",
 ]
 
 [tool.uvicorn]

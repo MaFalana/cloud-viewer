@@ -1,0 +1,13 @@
+---
+// This is a dynamic route that should be server-rendered
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import { ViewerApp } from '../components/ViewerApp';
+
+const mapTilerKey = import.meta.env.PUBLIC_MAPTILER_KEY || '';
+---
+
+<Layout title="Cloud Viewer">
+  <ViewerApp client:only="react" mapTilerKey={mapTilerKey} />
+</Layout>

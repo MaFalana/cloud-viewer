@@ -1,0 +1,75 @@
+/* Project Menu Dropdown */
+.project-menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1099;
+}
+
+.project-menu-dropdown {
+  background: var(--hdr-bg);
+  border: 1px solid var(--hdr-border);
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: saturate(120%) blur(8px);
+  width: 160px;
+  z-index: 1100;
+  overflow: hidden;
+}
+
+.project-menu-option {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--hdr-fg);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid var(--hdr-border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.project-menu-option:last-child {
+  border-bottom: none;
+}
+
+.project-menu-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.project-menu-option.delete:hover {
+  background: rgba(238, 47, 39, 0.15);
+  color: var(--hwc-red);
+}
+
+.project-menu-option svg {
+  width: 14px;
+  height: 14px;
+}
+
+.project-menu-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.project-menu-option .spinner-small {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--hdr-fg);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

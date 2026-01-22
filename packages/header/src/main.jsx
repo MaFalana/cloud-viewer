@@ -6,11 +6,11 @@ export default function HwcHeader({
   homeHref = "https://www.hwcengineering.com/",
   alt = "HWC Engineering",
   title,
-  right,
+  actions,
   children
 }) {
-  // right: optional convenience slot
-  // children: optional extra content (filters/buttons/etc.)
+  // actions: optional slot for header controls (search, filters, buttons, etc.)
+  // children: fallback slot for additional content
 
   return (
     <header className="hwc-header" role="banner" aria-label="HWC header">
@@ -28,8 +28,8 @@ export default function HwcHeader({
           ) : null}
         </div>
 
-        <div className="hwc-header__right">
-          {right}
+        <div className="hwc-header__actions">
+          {actions}
           {children}
         </div>
       </div>
