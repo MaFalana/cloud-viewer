@@ -36,6 +36,10 @@ jobs:
 
       - name: Build Astro Site
         run: npm --workspace=@hwc/web run build
+        env:
+          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
+          PUBLIC_MAPTILER_KEY: ${{ vars.PUBLIC_MAPTILER_KEY }}
+          PUBLIC_APP_BASE_PATH: "/cloud-viewer"
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
