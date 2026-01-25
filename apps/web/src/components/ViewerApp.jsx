@@ -5,7 +5,7 @@ import { HwcPotree, PotreeControls, PotreePanel } from '@hwc/potree';
 import { projectAPI } from '../api/index.js';
 import '../styles/viewer.css';
 
-export function ViewerApp({ mapTilerKey }) {
+export function ViewerApp({ mapTilerKey, basePath = '' }) {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,6 +13,7 @@ export function ViewerApp({ mapTilerKey }) {
   const [viewers, setViewers] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [baseLayer, setBaseLayer] = useState('satellite');
+  const [orthoOpacity, setOrthoOpacity] = useState(0.9);
 
   // Fetch project data on mount
   useEffect(() => {
@@ -30,20 +31,12 @@ export function ViewerApp({ mapTilerKey }) {
       try {
         const projectData = await projectAPI.getById(projectId);
         
-        // API returns cloud as a string URL, not an object
+        // API returns cloud as a string URL
         if (!projectData.cloud) {
           throw new Error('No point cloud data available for this project');
         }
         
-        // Normalize the data structure - convert cloud string to object if needed
-        const normalizedProject = {
-          ...projectData,
-          cloud: typeof projectData.cloud === 'string' 
-            ? { url: projectData.cloud }
-            : projectData.cloud
-        };
-        
-        setProject(normalizedProject);
+        setProject(projectData);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -59,7 +52,7 @@ export function ViewerApp({ mapTilerKey }) {
   if (loading) {
     return (
       <>
-        <HwcHeader title="Loading..." />
+        <HwcHeader title="Loading..." basePath={basePath} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - var(--header-h))', color: 'white', background: '#1a1c20' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>Loading project...</div>
@@ -73,12 +66,12 @@ export function ViewerApp({ mapTilerKey }) {
   if (error) {
     return (
       <>
-        <HwcHeader title="Error" />
+        <HwcHeader title="Error" basePath={basePath} />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - var(--header-h))', color: 'white', background: '#1a1c20' }}>
           <div style={{ textAlign: 'center' }}>
             <h1>Error Loading Project</h1>
             <p style={{ color: '#fca5a5', marginBottom: '1rem' }}>{error}</p>
-            <a href="/" style={{ color: '#ee2f27', textDecoration: 'underline' }}>Return to Dashboard</a>
+            <a href={`${basePath}/`} style={{ color: '#ee2f27', textDecoration: 'underline' }}>Return to Dashboard</a>
           </div>
         </div>
       </>
@@ -87,7 +80,7 @@ export function ViewerApp({ mapTilerKey }) {
 
   return (
     <>
-      <HwcHeader title={project.name} />
+      <HwcHeader title={project.name} basePath={basePath} />
       
       <div style={{ position: 'relative', width: '100%', height: 'calc(100vh - var(--header-h))' }}>
         {/* Mode Toggle (2D/3D) */}
@@ -119,7 +112,7 @@ export function ViewerApp({ mapTilerKey }) {
             aria-label="Streets view"
             title="Streets Map"
           >
-            <img src="/assets/streets.png" alt="Streets" />
+            <img src={`${basePath}/assets/streets.png`} alt="Streets" />
             <span className="active-dot" />
           </button>
           <button
@@ -129,48 +122,67 @@ export function ViewerApp({ mapTilerKey }) {
             aria-label="Satellite view"
             title="Satellite Imagery"
           >
-            <img src="/assets/satellite.png" alt="Satellite" />
+            <img src={`${basePath}/assets/satellite.png`} alt="Satellite" />
             <span className="active-dot" />
           </button>
         </div>
 
         {/* 2D Mode */}
         {mode === '2d' && (
-          <HwcMap
-            items={[]} // No markers in viewer mode
-            initialCenter={[project.location.lat, project.location.lon]}
-            initialZoom={18}
-            baseLayer={baseLayer}
-            onBaseLayerChange={setBaseLayer}
-            mapTilerKey={mapTilerKey}
-            fitBoundsOnLoad={!project.ortho} // Only fit to center if no ortho (ortho will fit to its bounds)
-            showControls={true}
-            showAttribution={true}
-          >
-            {/* Add ortho overlay if available */}
-            {project.ortho?.url && (
-              <ImageOrthoLayer
-                url={project.ortho.url}
-                bounds={project.ortho.bounds || null}
-                pointCloudBounds={project.cloud?.bounds}
-                crs={project.crs}
-                opacity={0.9}
-              />
-            )}
-          </HwcMap>
+          <>
+            <HwcMap
+              items={[]} // No markers in viewer mode
+              initialCenter={[project.location.lat, project.location.lon]}
+              initialZoom={18}
+              baseLayer={baseLayer}
+              onBaseLayerChange={setBaseLayer}
+              mapTilerKey={mapTilerKey}
+              orthoBounds={project.ortho?.bounds || null}
+              fitBoundsOnLoad={!project.ortho} // Only fit to center if no ortho (ortho will fit to its bounds)
+              showControls={true}
+              showAttribution={true}
+              basePath={basePath}
+            >
+              {/* Add ortho overlay if available */}
+              {project.ortho?.url && (
+                <ImageOrthoLayer
+                  url={project.ortho.url}
+                  bounds={project.ortho.bounds || null}
+                  crs={project.crs}
+                  opacity={orthoOpacity}
+                />
+              )}
+            </HwcMap>
+
+            {/* Ortho opacity control */}
+            <div className="ortho-opacity-control">
+              <label>
+                <span>Ortho Opacity</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={orthoOpacity * 100}
+                  onChange={(e) => setOrthoOpacity(e.target.value / 100)}
+                />
+                <span className="opacity-value">{Math.round(orthoOpacity * 100)}%</span>
+              </label>
+            </div>
+          </>
         )}
 
         {/* 3D Mode */}
         {mode === '3d' && (
           <>
             <HwcPotree
-              pointCloudUrl={`https://hwctopodot.blob.core.windows.net/hwc-potree/${project._id}/metadata.json`} //{project.cloud?.url}
+              pointCloudUrl={project.cloud}
               name={project.name}
               location={project.location}
               crs={project.crs}
               baseLayer={baseLayer}
               mapTilerKey={mapTilerKey}
               onViewerReady={setViewers}
+              basePath={basePath}
             />
 
             {viewers && (

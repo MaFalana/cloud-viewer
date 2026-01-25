@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  * Potree libs should be in: packages/potree/public/1.8.2/
  * They will be served from: /potree/1.8.2/ (via Vite public dir)
  */
-export function usePotreeLoader() {
+export function usePotreeLoader(appBasePath = '') {
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
 
@@ -40,7 +40,7 @@ export function usePotreeLoader() {
     const loadPotree = async () => {
       try {
         // Base path for Potree libs (served from public directory)
-        const basePath = '/potree/1.8.2';
+        const basePath = `${appBasePath}/potree/1.8.2`;
         
         loadCSS(`${basePath}/build/potree/potree.css`);
 
@@ -71,7 +71,7 @@ export function usePotreeLoader() {
     };
 
     loadPotree();
-  }, []);
+  }, [appBasePath]);
 
   return {
     isLoaded,

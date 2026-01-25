@@ -99,7 +99,7 @@ function TableRow({ project, isSelected, onSelect, onEditProject, onDeleteProjec
       <td className="table-cell-actions">
         <div className="table-actions-group">
           <a 
-            href={`/${project._id}`}
+            href={`${basePath}/${project._id}`}
             className="table-view-btn"
             aria-label="Open viewer"
           >
@@ -123,7 +123,7 @@ function TableRow({ project, isSelected, onSelect, onEditProject, onDeleteProjec
   );
 }
 
-export function ListView({ projects, onEditProject, onDeleteProject }) {
+export function ListView({ basePath = '', projects, onEditProject, onDeleteProject }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState(null);

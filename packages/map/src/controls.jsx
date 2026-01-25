@@ -3,7 +3,7 @@ import { FaPlus, FaMinus } from "react-icons/fa6";
 import { MdCenterFocusStrong } from "react-icons/md";
 import React from 'react';
 
-export function LayerToggle({ baseLayer, setBaseLayer }) {
+export function LayerToggle({ baseLayer, setBaseLayer, basePath = "" }) {
   return (
     <div className='layer-toggles'>
       <button 
@@ -12,7 +12,7 @@ export function LayerToggle({ baseLayer, setBaseLayer }) {
         aria-label="Street view"
         aria-checked={baseLayer === 'streets'}
       >
-        <img src="/assets/streets.png" alt="Street view" />
+        <img src={`${basePath}/assets/streets.png`} alt="Street view" />
         <span className="active-dot" />
       </button>
 
@@ -22,7 +22,7 @@ export function LayerToggle({ baseLayer, setBaseLayer }) {
         aria-label="Satellite view"
         aria-checked={baseLayer === 'satellite'}
       >
-        <img src="/assets/satellite.png" alt="Satellite view" />
+        <img src={`${basePath}/assets/satellite.png`} alt="Satellite view" />
         <span className="active-dot" />
       </button>
     </div>

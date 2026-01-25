@@ -8,7 +8,7 @@ export function PotreeViewer({ project, mapTilerKey }) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <HwcPotree
-        pointCloudUrl={`https://hwctopodot.blob.core.windows.net/hwc-potree/${project._id}/metadata.json`} //{project.cloud?.url}
+        pointCloudUrl={project.cloud}
         location={project.location}
         crs={project.crs}
         baseLayer="satellite"

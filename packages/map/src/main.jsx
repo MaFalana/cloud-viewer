@@ -137,6 +137,9 @@ export function HwcMap({
   showControls = true,
   showAttribution = true,
 
+  // Base path for assets
+  basePath = "",
+
   // Marker/cluster options
   cluster = true,
   clusterOptions = { showCoverageOnHover: false },
@@ -241,6 +244,7 @@ export function HwcMap({
           baseLayer={effectiveBaseLayer}
           setBaseLayer={(k) => onBaseLayerChange?.(k)}
           options={layerOptions}
+          basePath={basePath}
         />
       )}
 

@@ -18,6 +18,7 @@ import './potree.css';
  * @param {string} props.mapTilerKey - MapTiler API key for satellite imagery
  * @param {Function} props.onViewerReady - Callback when viewers are initialized
  * @param {Object} props.orthoUrl - Optional ortho COG URL for overlay
+ * @param {string} props.basePath - Base path for app (e.g., "/cloud-viewer")
  */
 export function HwcPotree({
   pointCloudUrl,
@@ -27,7 +28,8 @@ export function HwcPotree({
   baseLayer = 'satellite',
   mapTilerKey,
   onViewerReady,
-  orthoUrl
+  orthoUrl,
+  basePath = ''
 }) {
   const potreeContainerRef = useRef(null);
   const cesiumContainerRef = useRef(null);
@@ -37,10 +39,10 @@ export function HwcPotree({
   const [error, setError] = useState(null);
 
   // Load Cesium library (from Potree bundle)
-  const { isLoaded: isCesiumLoaded, error: cesiumError, Cesium } = useCesiumLoader();
+  const { isLoaded: isCesiumLoaded, error: cesiumError, Cesium } = useCesiumLoader(basePath);
 
   // Load Potree library
-  const { isLoaded: isPotreeLoaded, error: potreeError, Potree } = usePotreeLoader();
+  const { isLoaded: isPotreeLoaded, error: potreeError, Potree } = usePotreeLoader(basePath);
 
   // Initialize both viewers together
   useEffect(() => {

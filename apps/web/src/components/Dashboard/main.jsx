@@ -11,7 +11,7 @@ import { useToast } from "../Toast/useToast";
 import { useState, useEffect, useRef } from "react";
 import { projectAPI } from "../../api/index.js";
 
-export function Dashboard() {
+export function Dashboard({ basePath = '' }) {
     const [view, setView] = useState('map');
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -28,6 +28,7 @@ export function Dashboard() {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [highlightedId, setHighlightedId] = useState(null);
     const [targetProject, setTargetProject] = useState(null);
+    const [baseLayer, setBaseLayer] = useState('satellite');
     
     const { toasts, removeToast, showSuccess, showError, showInfo } = useToast();
     
@@ -172,7 +173,7 @@ export function Dashboard() {
     // Map-specific handlers
     const handleMarkerClick = (id, project) => {
         // Navigate directly to viewer instead of selecting
-        window.location.href = `/${id}`;
+        window.location.href = `${basePath}/${id}`;
     };
 
     const handleSelect = (id) => {
@@ -250,6 +251,7 @@ export function Dashboard() {
         <>
             <HwcHeader 
                 title="Cloud Viewer"
+                basePath={basePath}
                 actions={
                     <DashboardActions
                         view={view}
@@ -296,11 +298,15 @@ export function Dashboard() {
                                     targetItem={targetProject}
                                     onSelect={handleMarkerClick}
                                     onHover={handleHover}
+                                    baseLayer={baseLayer}
+                                    onBaseLayerChange={setBaseLayer}
                                     showControls={true}
                                     showAttribution={true}
                                     cluster={true}
+                                    basePath={basePath}
                                 />
                                 <MapList
+                                    basePath={basePath}
                                     projects={projects.filter(p => p.location?.lat && p.location?.lon)}
                                     selectedIds={selectedIds}
                                     highlightedId={highlightedId}
@@ -312,8 +318,8 @@ export function Dashboard() {
                                 />
                             </div>
                         )}
-                        {view === 'card' && <CardGrid projects={projects} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} />}
-                        {view === 'list' && <ListView projects={projects} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} />}
+                        {view === 'card' && <CardGrid basePath={basePath} projects={projects} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} />}
+                        {view === 'list' && <ListView basePath={basePath} projects={projects} onEditProject={handleEditProject} onDeleteProject={handleDeleteProject} />}
                         
                         {loading && projects.length > 0 && (
                             <div className="loading-more" role="status" aria-live="polite">

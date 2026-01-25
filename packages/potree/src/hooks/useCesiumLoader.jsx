@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  * Cesium libs should be in: packages/potree/public/1.8.2/libs/Cesium/
  * They will be served from: /potree/1.8.2/libs/Cesium/ (via Vite public dir)
  */
-export function useCesiumLoader() {
+export function useCesiumLoader(appBasePath = '') {
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
 
@@ -40,7 +40,7 @@ export function useCesiumLoader() {
     const loadCesium = async () => {
       try {
         // Base path for Cesium libs (served from public directory)
-        const basePath = '/potree/1.8.2/libs/Cesium';
+        const basePath = `${appBasePath}/potree/1.8.2/libs/Cesium`;
         
         loadCSS(`${basePath}/Widgets/CesiumWidget/CesiumWidget.css`);
         await loadScript(`${basePath}/Cesium.js`);
@@ -59,7 +59,7 @@ export function useCesiumLoader() {
     };
 
     loadCesium();
-  }, []);
+  }, [appBasePath]);
 
   return {
     isLoaded,

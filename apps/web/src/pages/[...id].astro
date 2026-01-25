@@ -6,8 +6,14 @@ import Layout from '../layouts/Layout.astro';
 import { ViewerApp } from '../components/ViewerApp';
 
 const mapTilerKey = import.meta.env.PUBLIC_MAPTILER_KEY || '';
+const basePath = import.meta.env.PUBLIC_APP_BASE_PATH || '';
+
+// Extract project ID from URL for the title
+const pathParts = Astro.url.pathname.split('/').filter(Boolean);
+const projectId = pathParts[pathParts.length - 1];
+const pageTitle = projectId ? `${projectId} | Cloud Viewer` : 'Cloud Viewer';
 ---
 
-<Layout title="Cloud Viewer">
-  <ViewerApp client:only="react" mapTilerKey={mapTilerKey} />
+<Layout title={pageTitle}>
+  <ViewerApp client:only="react" mapTilerKey={mapTilerKey} basePath={basePath} />
 </Layout>

@@ -7,7 +7,7 @@ import { ProjectMenu } from './ProjectMenu';
 import { ProcessingIndicator } from './ProcessingIndicator';
 import { jobAPI } from '../../api/index.js';
 
-function MapListItem({ project, isSelected, isHighlighted, onSelect, onNavigate, onHover, onEditProject, onDeleteProject }) {
+function MapListItem({ basePath = '', project, isSelected, isHighlighted, onSelect, onNavigate, onHover, onEditProject, onDeleteProject }) {
   const [activeJob, setActiveJob] = useState(null);
   
   const formattedDate = new Date(project.date).toLocaleDateString('en-US', {
@@ -88,7 +88,7 @@ function MapListItem({ project, isSelected, isHighlighted, onSelect, onNavigate,
       </div>
       
       <a 
-        href={`/${project._id}`}
+        href={`${basePath}/${project._id}`}
         className="map-list-nav-btn" 
         aria-label="Open viewer"
       >
@@ -111,7 +111,7 @@ function MapListItem({ project, isSelected, isHighlighted, onSelect, onNavigate,
   );
 }
 
-export function MapList({ projects, selectedIds, onSelect, onNavigate, highlightedId, onHover, onEditProject, onDeleteProject }) {
+export function MapList({ basePath = '', projects, selectedIds, onSelect, onNavigate, highlightedId, onHover, onEditProject, onDeleteProject }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -182,6 +182,7 @@ export function MapList({ projects, selectedIds, onSelect, onNavigate, highlight
             {projects.map((project) => (
               <MapListItem
                 key={project._id}
+                basePath={basePath}
                 project={project}
                 isSelected={selectedIds.has(project._id)}
                 isHighlighted={highlightedId === project._id}

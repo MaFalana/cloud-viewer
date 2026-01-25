@@ -6,7 +6,7 @@ import { IoAlertCircle } from 'react-icons/io5';
 import '../../../styles/card.css';
 import '../../../styles/project-modal.css';
 
-export function CardGrid({ projects, onEditProject, onDeleteProject }) {
+export function CardGrid({ basePath = '', projects, onEditProject, onDeleteProject }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState(null);
@@ -86,6 +86,7 @@ export function CardGrid({ projects, onEditProject, onDeleteProject }) {
       <div className="card-grid">
         {projects.map((project) => (
           <HWCCard 
+            basePath={basePath}
             key={project._id} 
             project={project} 
             isSelected={selectedIds.has(project._id)}

@@ -28,8 +28,9 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   const [errorMessage, setErrorMessage] = useState('');
   const crsInputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const orthoFileInputRef = useRef(null);
   
-  // Upload state
+  // Point cloud upload state
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -37,6 +38,13 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingJob, setProcessingJob] = useState(null);
   const [uploadError, setUploadError] = useState(null);
+  
+  // Ortho upload state
+  const [selectedOrthoFile, setSelectedOrthoFile] = useState(null);
+  const [isOrthoDragging, setIsOrthoDragging] = useState(false);
+  const [isOrthoUploading, setIsOrthoUploading] = useState(false);
+  const [orthoUploadProgress, setOrthoUploadProgress] = useState(0);
+  const [orthoUploadError, setOrthoUploadError] = useState(null);
   
   // Active jobs state
   const [activeJobs, setActiveJobs] = useState([]);
@@ -82,6 +90,10 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
       setIsUploading(false);
       setIsProcessing(false);
       setUploadProgress(0);
+      setSelectedOrthoFile(null);
+      setOrthoUploadError(null);
+      setIsOrthoUploading(false);
+      setOrthoUploadProgress(0);
     } else {
       // Clean up polling when modal closes
       if (pollingIntervalRef.current) {
@@ -204,9 +216,12 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   // Cleanup on unmount: abort uploads and stop polling
   useEffect(() => {
     return () => {
-      // Cancel any in-flight upload
+      // Cancel any in-flight uploads
       if (isUploading) {
         projectAPI.cancelUpload();
+      }
+      if (isOrthoUploading) {
+        projectAPI.cancelOrthoUpload();
       }
       
       // Stop polling
@@ -275,10 +290,15 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
-    if (file && validateFile(file)) {
-      setSelectedFile(file);
-      setErrorMessage('');
-    }
+    if (!file) return;
+    
+    // Defer validation and state update to avoid blocking UI
+    setTimeout(() => {
+      if (validateFile(file)) {
+        setSelectedFile(file);
+        setErrorMessage('');
+      }
+    }, 0);
   };
 
   const handleDragOver = (e) => {
@@ -299,10 +319,15 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
     setIsDragging(false);
     
     const file = e.dataTransfer.files?.[0];
-    if (file && validateFile(file)) {
-      setSelectedFile(file);
-      setErrorMessage('');
-    }
+    if (!file) return;
+    
+    // Defer validation and state update to avoid blocking UI
+    setTimeout(() => {
+      if (validateFile(file)) {
+        setSelectedFile(file);
+        setErrorMessage('');
+      }
+    }, 0);
   };
 
   const handleBrowseClick = () => {
@@ -374,6 +399,121 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
     setUploadError(null);
   };
 
+  // Ortho file upload handlers
+  const validateOrthoFile = (file) => {
+    const validExtensions = ['.tif', '.tiff'];
+    const fileName = file.name.toLowerCase();
+    const isValid = validExtensions.some(ext => fileName.endsWith(ext));
+    
+    if (!isValid) {
+      setErrorMessage('Invalid file type. Only .tif and .tiff files are accepted.');
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleOrthoFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file && validateOrthoFile(file)) {
+      setSelectedOrthoFile(file);
+      setErrorMessage('');
+    }
+  };
+
+  const handleOrthoDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOrthoDragging(true);
+  };
+
+  const handleOrthoDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOrthoDragging(false);
+  };
+
+  const handleOrthoDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOrthoDragging(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    
+    // Defer validation and state update to avoid blocking UI
+    setTimeout(() => {
+      if (validateOrthoFile(file)) {
+        setSelectedOrthoFile(file);
+        setErrorMessage('');
+      }
+    }, 0);
+  };
+
+  const handleOrthoBrowseClick = () => {
+    orthoFileInputRef.current?.click();
+  };
+
+  const handleOrthoUpload = async (projectId = null) => {
+    const targetProjectId = projectId || project?._id;
+    
+    if (!selectedOrthoFile || !targetProjectId) {
+      return;
+    }
+
+    setIsOrthoUploading(true);
+    setOrthoUploadProgress(0);
+    setOrthoUploadError(null);
+    setErrorMessage('');
+    
+    let uploadCompleteHandled = false;
+
+    try {
+      await projectAPI.uploadOrtho(targetProjectId, selectedOrthoFile, {
+        onUploadProgress: (percent) => {
+          setOrthoUploadProgress(percent);
+        },
+        onJobProgress: (job) => {
+          // Only handle upload completion once
+          if (uploadCompleteHandled) return;
+          uploadCompleteHandled = true;
+          
+          // Job created - upload complete!
+          setIsOrthoUploading(false);
+          setSelectedOrthoFile(null);
+          setOrthoUploadProgress(0);
+          
+          // Show success toast
+          if (showToast) {
+            showToast.showSuccess('Ortho upload complete! Processing in background...');
+          }
+          
+          // Refresh project list to show processing indicator
+          if (onSave) {
+            projectAPI.getById(targetProjectId).then(onSave);
+          }
+          
+          // Refresh active jobs
+          fetchActiveJobs();
+        },
+      });
+    } catch (error) {
+      setOrthoUploadError(error.message);
+      setIsOrthoUploading(false);
+      if (showToast) {
+        showToast.showError(`Ortho upload failed: ${error.message}`);
+      }
+    }
+  };
+
+  const handleCancelOrthoUpload = () => {
+    projectAPI.cancelOrthoUpload();
+    setIsOrthoUploading(false);
+    setOrthoUploadProgress(0);
+    setSelectedOrthoFile(null);
+    setOrthoUploadError(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -441,6 +581,11 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
         } else {
           setHasChanges(false);
           onClose();
+        }
+        
+        // If ortho file was selected, upload it after project creation
+        if (selectedOrthoFile) {
+          await handleOrthoUpload(projectId);
         }
       }
     } catch (error) {
@@ -743,6 +888,106 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
                 )}
             </div>
 
+            {/* Ortho Upload Area - Available in both create and edit mode */}
+            <div className="form-group">
+              <label>Orthophoto Upload {!project && '(Optional)'}</label>
+              <p className="form-help-text">Upload GeoTIFF (.tif/.tiff) file, max 30GB. Will be converted to Cloud Optimized GeoTIFF.</p>
+                
+                {/* Show ortho upload progress */}
+                {isOrthoUploading && (
+                  <div className="upload-progress-container" role="status" aria-live="polite">
+                    <div className="upload-progress-header">
+                      <CgSpinner className="spinner-icon" aria-label="Uploading" />
+                      <span>Uploading {selectedOrthoFile?.name}...</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${orthoUploadProgress}%` }}
+                      />
+                    </div>
+                    <div className="upload-progress-footer">
+                      <span>{orthoUploadProgress}%</span>
+                      <button 
+                        type="button" 
+                        onClick={handleCancelOrthoUpload}
+                        className="cancel-upload-btn"
+                        aria-label="Cancel ortho upload"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Show ortho upload error with retry */}
+                {orthoUploadError && (
+                  <div className="upload-error" role="alert">
+                    <p>{orthoUploadError}</p>
+                    <button 
+                      type="button" 
+                      onClick={handleOrthoUpload}
+                      className="retry-upload-btn"
+                      aria-label="Retry ortho upload"
+                    >
+                      Retry Upload
+                    </button>
+                  </div>
+                )}
+
+                {/* Show ortho upload area when not uploading */}
+                {!isOrthoUploading && (
+                  <div 
+                    className={`upload-area ${isOrthoDragging ? 'dragging' : ''}`}
+                    onDragOver={handleOrthoDragOver}
+                    onDragLeave={handleOrthoDragLeave}
+                    onDrop={handleOrthoDrop}
+                  >
+                    <FaUpload className="upload-icon" />
+                    <p className="upload-text">
+                      {selectedOrthoFile ? selectedOrthoFile.name : 'Drag and drop GeoTIFF file here'}
+                    </p>
+                    <button 
+                      type="button" 
+                      onClick={handleOrthoBrowseClick}
+                      className="upload-browse-btn"
+                      aria-label={selectedOrthoFile ? 'Change selected ortho file' : 'Browse for ortho file'}
+                    >
+                      {selectedOrthoFile ? 'Change File' : 'Or click to browse'}
+                    </button>
+                    <input 
+                      ref={orthoFileInputRef}
+                      type="file" 
+                      accept=".tif,.tiff"
+                      onChange={handleOrthoFileSelect}
+                      style={{ display: 'none' }}
+                    />
+                    {selectedOrthoFile && !orthoUploadError && (
+                      <p className="upload-file-info">
+                        Size: {(selectedOrthoFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    )}
+                    {/* Only show manual upload button in edit mode */}
+                    {selectedOrthoFile && !orthoUploadError && project && (
+                      <button 
+                        type="button" 
+                        onClick={() => handleOrthoUpload()}
+                        className="start-upload-btn"
+                        aria-label="Start uploading ortho file"
+                      >
+                        Start Upload
+                      </button>
+                    )}
+                    {/* In create mode, show info that upload will happen after creation */}
+                    {selectedOrthoFile && !orthoUploadError && !project && (
+                      <p className="upload-info-text">
+                        File will be uploaded after project creation
+                      </p>
+                    )}
+                  </div>
+                )}
+            </div>
+
             {/* Active Jobs Display - Only show in edit mode */}
             {project && activeJobs.length > 0 && (
               <div className="form-group">
@@ -759,6 +1004,9 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
                       </div>
                       
                       <div className="job-info">
+                        <div className="job-type-badge">
+                          {job.type === 'ortho_conversion' ? 'Ortho' : 'Point Cloud'}
+                        </div>
                         <div className="job-status-text">
                           {job.status === 'failed' && 'Failed'}
                           {job.status === 'pending' && 'Pending...'}
@@ -801,7 +1049,7 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
               type="button" 
               onClick={handleClose} 
               className="btn-secondary" 
-              disabled={isSubmitting || isUploading || isProcessing}
+              disabled={isSubmitting || isUploading || isProcessing || isOrthoUploading}
               aria-label="Cancel and close modal"
             >
               Cancel
@@ -809,16 +1057,20 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
             <button 
               type="submit" 
               className="btn-primary" 
-              disabled={isSubmitting || isUploading || isProcessing}
+              disabled={isSubmitting || isUploading || isProcessing || isOrthoUploading}
               aria-label={isSubmitting ? 'Saving project' : (project ? 'Update project' : 'Create project')}
             >
               {isSubmitting ? (
                 <>
                   <span className="spinner-small" aria-hidden="true"></span>
-                  {project ? 'Updating...' : (selectedFile ? 'Creating & Uploading...' : 'Creating...')}
+                  {project ? 'Updating...' : (
+                    (selectedFile || selectedOrthoFile) ? 'Creating & Uploading...' : 'Creating...'
+                  )}
                 </>
               ) : (
-                project ? 'Update Project' : (selectedFile ? 'Create & Upload' : 'Create Project')
+                project ? 'Update Project' : (
+                  (selectedFile || selectedOrthoFile) ? 'Create & Upload' : 'Create Project'
+                )
               )}
             </button>
           </div>

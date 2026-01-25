@@ -7,7 +7,7 @@ import { ProjectMenu } from '../ProjectMenu';
 import { ProcessingIndicator } from '../ProcessingIndicator';
 import { jobAPI } from '../../../api/index.js';
 
-export function HWCCard({ project, isSelected, onSelect, onEditProject, onDeleteProject }) {
+export function HWCCard({ basePath = '', project, isSelected, onSelect, onEditProject, onDeleteProject }) {
     const [activeJob, setActiveJob] = useState(null);
     const [isHovered, setIsHovered] = useState(false);
     
@@ -120,7 +120,7 @@ export function HWCCard({ project, isSelected, onSelect, onEditProject, onDelete
                     <h3 className="card-title">{project.name}</h3>
                     <div className="card-header-actions">
                         <a 
-                            href={`/${project._id}`}
+                            href={`${basePath}/${project._id}`}
                             className="card-view-btn"
                             aria-label="Open viewer"
                             onClick={(e) => e.stopPropagation()}

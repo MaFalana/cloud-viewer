@@ -323,6 +323,107 @@ class ProjectAPI extends BaseAPI {
       this._currentUpload = null;
     }
   }
+
+  /**
+   * Upload orthophoto file for a project
+   * @param {string} projectId - Project ID
+   * @param {File} file - GeoTIFF file (.tif or .tiff)
+   * @param {Object} options - Upload options
+   * @param {Function} options.onUploadProgress - Callback for upload progress (0-100)
+   * @param {Function} options.onJobProgress - Callback for job progress updates
+   * @returns {Promise<Object>} Job object
+   */
+  async uploadOrtho(projectId, file, { onUploadProgress, onJobProgress } = {}) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Use XMLHttpRequest for upload progress tracking
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && onUploadProgress) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          onUploadProgress(percent);
+        }
+      });
+
+      // Handle completion
+      xhr.addEventListener('load', async () => {
+        if (xhr.status === 202) {
+          try {
+            const job = JSON.parse(xhr.responseText);
+            
+            // If job progress callback provided, start polling
+            if (onJobProgress && job.job_id) {
+              // Import JobAPI dynamically to avoid circular dependency
+              const { jobAPI } = await import('./index.js');
+              try {
+                await jobAPI.pollJob(job.job_id, {
+                  onProgress: onJobProgress,
+                  interval: 2000,
+                });
+              } catch (pollError) {
+                // Job polling failed, but upload succeeded
+                console.error('Job polling failed:', pollError);
+              }
+            }
+            
+            resolve(job);
+          } catch (error) {
+            reject(new Error('Failed to parse upload response'));
+          }
+        } else {
+          // Handle error response
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            const errorMessage = errorData.detail || errorData.message || 'Upload failed';
+            
+            if (xhr.status === 400) {
+              reject(new Error(`Validation error: ${errorMessage}`));
+            } else if (xhr.status === 404) {
+              reject(new Error('Project not found'));
+            } else if (xhr.status === 413) {
+              reject(new Error('File too large (max 30GB)'));
+            } else if (xhr.status === 500) {
+              reject(new Error('Something went wrong. Please try again.'));
+            } else {
+              reject(new Error(`Upload failed: ${errorMessage}`));
+            }
+          } catch {
+            reject(new Error('Upload failed'));
+          }
+        }
+      });
+
+      // Handle network errors
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error. Please check your connection.'));
+      });
+
+      // Handle abort
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Upload cancelled'));
+      });
+
+      xhr.open('POST', `${this.baseURL}/projects/${projectId}/ortho`);
+      xhr.send(formData);
+
+      // Store xhr for potential cancellation
+      this._currentOrthoUpload = xhr;
+    });
+  }
+
+  /**
+   * Cancel current ortho upload
+   */
+  cancelOrthoUpload() {
+    if (this._currentOrthoUpload) {
+      this._currentOrthoUpload.abort();
+      this._currentOrthoUpload = null;
+    }
+  }
 }
 
 export default ProjectAPI;
