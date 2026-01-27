@@ -1,13 +1,17 @@
 {
   "routes": [
     {
-      "route": "/*",
+      "route": "/cloud-viewer",
+      "rewrite": "/cloud-viewer/index.html"
+    },
+    {
+      "route": "/cloud-viewer/*",
       "allowedRoles": ["anonymous", "authenticated"]
     }
   ],
   "navigationFallback": {
-    "rewrite": "/_fallback/index.html",
-    "exclude": ["/assets/*", "/potree/*", "/index.html", "/viewer-example/*", "*.{css,scss,js,png,gif,ico,jpg,svg,wasm}"]
+    "rewrite": "/cloud-viewer/_fallback/index.html",
+    "exclude": ["/cloud-viewer/assets/*", "/cloud-viewer/potree/*", "/cloud-viewer/index.html", "/cloud-viewer/viewer-example/*", "*.{css,scss,js,png,gif,ico,jpg,svg,wasm}"]
   },
   "mimeTypes": {
     ".json": "application/json",
