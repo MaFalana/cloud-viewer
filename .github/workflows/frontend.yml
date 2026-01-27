@@ -99,7 +99,7 @@ jobs:
           ###### Repository/Build Configurations ######
           app_location: "apps/web" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "dist" # Built app content directory - optional
+          output_location: "dist/cloud-viewer" # Built app content directory - optional
           app_build_command: "npm run build" # Let Azure build it
           ###### End of Repository/Build Configurations ######
 
