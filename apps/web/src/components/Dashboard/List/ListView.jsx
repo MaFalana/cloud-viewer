@@ -10,7 +10,7 @@ import { ProjectMenu } from '../ProjectMenu';
 import { ProcessingIndicator } from '../ProcessingIndicator';
 import { jobAPI, projectAPI } from '../../../api/index.js';
 
-function TableRow({ project, isSelected, onSelect, onEditProject, onDeleteProject }) {
+function TableRow({ basePath = '', project, isSelected, onSelect, onEditProject, onDeleteProject }) {
   const [activeJob, setActiveJob] = useState(null);
   
   const formattedDate = new Date(project.date).toLocaleDateString('en-US', {
@@ -251,7 +251,8 @@ export function ListView({ basePath = '', projects, onEditProject, onDeleteProje
         <tbody>
           {projects.map((project) => (
             <TableRow 
-              key={project._id} 
+              key={project._id}
+              basePath={basePath}
               project={project}
               isSelected={selectedIds.has(project._id)}
               onSelect={handleSelect}
