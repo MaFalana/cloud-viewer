@@ -62,7 +62,7 @@ jobs:
       - name: Debug deployment token
         run: |
           echo "Checking token format..."
-          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
+          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GREEN_MUSHROOM_0C30E6E0F }}" ]; then
             echo "ERROR: AZURE_STATIC_WEB_APPS_API_TOKEN secret is empty or not set"
             exit 1
           fi
