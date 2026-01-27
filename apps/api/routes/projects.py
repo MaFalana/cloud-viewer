@@ -274,102 +274,6 @@ async def upload_project(
 
     
 
-@project_router.post(
-    '/{id}/refresh-urls',
-    summary="Refresh SAS URLs",
-    description="Regenerate expired SAS URLs for project cloud and thumbnail without re-processing.",
-    response_description="Updated project with fresh SAS URLs"
-)
-async def refresh_project_urls(id: str):
-    """
-    Refresh expired SAS URLs for a project.
-    
-    When SAS URLs expire (after 30 days), use this endpoint to generate
-    fresh URLs without re-processing the point cloud data.
-    
-    **Path Parameters:**
-    - **id**: Project identifier
-    
-    **Returns:**
-    - 200: URLs refreshed successfully
-    - 404: Project not found or no files to refresh
-    - 500: Server error
-    
-    **Example Response:**
-    ```json
-    {
-      "message": "SAS URLs refreshed successfully",
-      "project_id": "PROJ-001",
-      "cloud": "https://storage.blob.core.windows.net/.../metadata.json?sv=...",
-      "thumbnail": "https://storage.blob.core.windows.net/.../thumbnail.png?sv=..."
-    }
-    ```
-    
-    **Use Cases:**
-    - SAS URLs expired and point cloud won't load
-    - Sharing project with new expiration time
-    - Extending access without re-uploading
-    """
-    from fastapi import HTTPException
-    
-    logger.info(f"Refreshing SAS URLs for project: {id}")
-    
-    try:
-        # Check if project exists
-        project = DB.getProject({'_id': id})
-        if not project:
-            logger.warning(f"Project not found: {id}")
-            raise HTTPException(status_code=404, detail=f"Project with id {id} not found")
-        
-        # Check if project has files to refresh
-        metadata_blob = f"{id}/metadata.json"
-        thumbnail_blob = f"{id}/thumbnail.png"
-        
-        refreshed_urls = {}
-        
-        # Try to refresh cloud URL (metadata.json)
-        try:
-            new_cloud_url = DB.az.generate_sas_url(metadata_blob, hours_valid=720)  # 30 days
-            project.cloud = new_cloud_url
-            refreshed_urls['cloud'] = new_cloud_url
-            logger.info(f"Refreshed cloud URL for project {id}")
-        except Exception as e:
-            logger.warning(f"Could not refresh cloud URL for {id}: {e}")
-        
-        # Try to refresh thumbnail URL
-        try:
-            new_thumbnail_url = DB.az.generate_sas_url(thumbnail_blob, hours_valid=720)  # 30 days
-            project.thumbnail = new_thumbnail_url
-            refreshed_urls['thumbnail'] = new_thumbnail_url
-            logger.info(f"Refreshed thumbnail URL for project {id}")
-        except Exception as e:
-            logger.warning(f"Could not refresh thumbnail URL for {id}: {e}")
-        
-        if not refreshed_urls:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"No files found to refresh for project {id}. Project may not have been processed yet."
-            )
-        
-        # Update project in database
-        DB.updateProject(project)
-        
-        response = {
-            "message": "SAS URLs refreshed successfully",
-            "project_id": id,
-            **refreshed_urls
-        }
-        
-        logger.info(f"Successfully refreshed {len(refreshed_urls)} URL(s) for project {id}")
-        return response
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to refresh URLs for project {id}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to refresh SAS URLs")
-
-
 @project_router.get(
     '/{id}',
     response_model=Project,
@@ -623,32 +527,40 @@ async def batch_delete_projects(project_ids: List[str]):
     '/{project_id}/ortho',
     status_code=202,
     summary="Upload orthophoto for project",
-    description="Upload a GeoTIFF file for a project. The file will be converted to Cloud Optimized GeoTIFF (COG) format.",
+    description="Upload a georeferenced raster file for a project. The file will be converted to a PNG overlay with bounds for Leaflet.",
     response_description="Job created for ortho conversion"
 )
 async def upload_ortho(
     project_id: str,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    world_file: Optional[UploadFile] = File(None)
 ):
     """
-    Upload an orthophoto (GeoTIFF) file for a project.
+    Upload an orthophoto (georeferenced raster) file for a project.
     
     The uploaded file will be:
-    1. Validated for correct file extension (.tif or .tiff)
-    2. Uploaded to Azure temporary storage
-    3. Queued for conversion to Cloud Optimized GeoTIFF (COG) format
+    1. Validated for correct file extension
+    2. Uploaded to Azure temporary storage (with optional world file)
+    3. Queued for conversion to PNG overlay with EPSG:4326 bounds
     4. Processed to generate a thumbnail preview
     5. Stored in the project's Azure storage location
+    
+    **Supported Formats:**
+    - **GeoTIFF** (.tif, .tiff) - georeferencing embedded, no world file needed
+    - **JPEG** (.jpg, .jpeg) - requires .jgw world file
+    - **PNG** (.png) - requires .pgw world file
+    - **Any format** - can use generic .wld world file
     
     **Path Parameters:**
     - **project_id**: Project identifier
     
     **Form Parameters:**
-    - **file**: GeoTIFF file (.tif or .tiff, max 30GB)
+    - **file**: Georeferenced raster file (max 30GB)
+    - **world_file**: Optional world file (.jgw, .pgw, .wld) - required for JPEG/PNG
     
     **Returns:**
     - 202 Accepted: File uploaded and job created
-    - 400 Bad Request: Invalid file type or missing file
+    - 400 Bad Request: Invalid file type, missing file, or missing required world file
     - 404 Not Found: Project not found
     - 413 Payload Too Large: File exceeds 30GB limit
     - 500 Internal Server Error: Server error
@@ -665,13 +577,15 @@ async def upload_ortho(
     ```
     
     **Workflow:**
-    1. Upload ortho using this endpoint
+    1. Upload ortho using this endpoint (with world file if needed)
     2. Monitor job status using GET /jobs/{job_id}
     3. Access processed ortho from updated project (GET /projects/{id})
     
     **Notes:**
+    - GeoTIFF files don't need a world file (georeferencing is embedded)
+    - JPEG/PNG files require a world file for georeferencing
     - Uploading a new ortho will overwrite any existing ortho for the project
-    - Processing time varies based on file size (typically 5-30 minutes)
+    - Processing time varies based on file size (typically 2-15 minutes)
     - The job can be cancelled using POST /jobs/{job_id}/cancel
     """
     from fastapi import HTTPException
@@ -698,14 +612,38 @@ async def upload_ortho(
                 detail="No file provided"
             )
         
-        # Validate file extension
+        # Validate file extension - support GeoTIFF, JPG, PNG
         filename = file.filename.lower()
-        if not (filename.endswith('.tif') or filename.endswith('.tiff')):
+        valid_extensions = ('.tif', '.tiff', '.jpg', '.jpeg', '.png')
+        if not filename.endswith(valid_extensions):
             logger.warning(f"Invalid file extension for ortho upload: {filename}")
             raise HTTPException(
                 status_code=400,
-                detail="Invalid file type. Only .tif and .tiff files are supported"
+                detail=f"Invalid file type. Supported formats: {', '.join(valid_extensions)}"
             )
+        
+        # Check if world file is required
+        is_geotiff = filename.endswith(('.tif', '.tiff'))
+        requires_world_file = not is_geotiff
+        
+        if requires_world_file and not world_file:
+            logger.warning(f"World file required but not provided for: {filename}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"World file required for {filename}. Please upload .jgw (JPEG), .pgw (PNG), or .wld (generic) file."
+            )
+        
+        # Validate world file extension if provided
+        if world_file:
+            world_filename = world_file.filename.lower()
+            valid_world_extensions = ('.jgw', '.pgw', '.wld', '.jpgw', '.pngw')
+            if not world_filename.endswith(valid_world_extensions):
+                logger.warning(f"Invalid world file extension: {world_filename}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid world file type. Supported: {', '.join(valid_world_extensions)}"
+                )
+            logger.info(f"World file provided: {world_filename}")
         
         # Validate file size (30GB limit)
         MAX_FILE_SIZE = 30 * 1024 * 1024 * 1024  # 30GB in bytes
@@ -725,21 +663,52 @@ async def upload_ortho(
         # Generate job ID
         job_id = str(uuid.uuid4())
         
-        # Save file to temporary location
-        temp_file_path = os.path.join(tempfile.gettempdir(), f"{job_id}.tif")
+        # Determine file extension for temp file
+        file_ext = '.tif'  # default
+        if filename.endswith('.tiff'):
+            file_ext = '.tiff'
+        elif filename.endswith('.jpg') or filename.endswith('.jpeg'):
+            file_ext = '.jpg'
+        elif filename.endswith('.png'):
+            file_ext = '.png'
+        
+        # Save main file to temporary location
+        temp_file_path = os.path.join(tempfile.gettempdir(), f"{job_id}{file_ext}")
         with open(temp_file_path, "wb") as temp_file:
             content = await file.read()
             temp_file.write(content)
         
         logger.info(f"Saved ortho file to temporary location: {temp_file_path}")
         
-        # Upload to Azure temporary storage
-        azure_blob_name = f"jobs/{job_id}.tif"
+        # Save world file if provided (same base name as main file)
+        world_file_path = None
+        if world_file:
+            world_filename = world_file.filename.lower()
+            world_ext = os.path.splitext(world_filename)[1]
+            world_file_path = os.path.join(tempfile.gettempdir(), f"{job_id}{world_ext}")
+            
+            with open(world_file_path, "wb") as temp_world:
+                world_content = await world_file.read()
+                temp_world.write(world_content)
+            
+            logger.info(f"Saved world file to temporary location: {world_file_path}")
+        
+        # Upload main file to Azure temporary storage
+        azure_blob_name = f"jobs/{job_id}{file_ext}"
         DB.az.upload_file(temp_file_path, azure_blob_name)
         logger.info(f"Uploaded ortho to Azure: {azure_blob_name}")
         
-        # Clean up temporary file
+        # Upload world file to Azure if provided
+        if world_file_path:
+            world_ext = os.path.splitext(world_file_path)[1]
+            azure_world_blob_name = f"jobs/{job_id}{world_ext}"
+            DB.az.upload_file(world_file_path, azure_world_blob_name)
+            logger.info(f"Uploaded world file to Azure: {azure_world_blob_name}")
+        
+        # Clean up temporary files
         os.remove(temp_file_path)
+        if world_file_path:
+            os.remove(world_file_path)
         
         # Create job in database
         from models.Job import Job

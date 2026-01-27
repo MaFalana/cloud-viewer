@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import uvicorn
 
-from azure.storage.blob import (BlobServiceClient, ContentSettings, generate_blob_sas, BlobSasPermissions)
+from azure.storage.blob import (BlobServiceClient, ContentSettings, PublicAccess)
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
@@ -18,6 +18,9 @@ from storage.db import DatabaseManager
 load_dotenv()
 
 print("Environment variables loaded.\n")
+
+# Ortho processing configuration
+ORTHO_DOWNSAMPLE_PERCENT = 75  # Downsample orthophotos to 75% to reduce file size and improve frontend performance
 
 DB = DatabaseManager()
 #AZ = AzureStorageManager(DB.name)

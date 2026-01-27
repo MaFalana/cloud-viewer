@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 env:
-  STATIC_WEB_APP_NAME: hwc-crawfordsville-web
+  STATIC_WEB_APP_NAME: hwc-cloud-viewer
   AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
 jobs:
