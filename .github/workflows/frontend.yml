@@ -51,6 +51,9 @@ jobs:
       - name: Sync Assets
         run: npm run assets:sync
 
+      - name: Sync Potree
+        run: npm run potree:sync
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
