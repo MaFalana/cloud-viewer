@@ -5,6 +5,6 @@ import react from '@astrojs/react';
 // https://astro.build/config
 export default defineConfig({
   integrations: [react()],
-  base: '/cloud-viewer',
-  trailingSlash: 'ignore' // Allow both with and without trailing slash
+  // No base - Azure deploys from dist/cloud-viewer/ which becomes the root
+  trailingSlash: 'ignore'
 });
