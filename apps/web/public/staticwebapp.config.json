@@ -1,9 +1,14 @@
 {
+  "routes": [
+    {
+      "route": "/*",
+      "allowedRoles": ["anonymous", "authenticated"]
+    }
+  ],
   "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/potree/*", "*.{css,scss,js,png,gif,ico,jpg,svg,wasm}"]
+    "rewrite": "/_fallback/index.html",
+    "exclude": ["/assets/*", "/potree/*", "/index.html", "/viewer-example/*", "*.{css,scss,js,png,gif,ico,jpg,svg,wasm}"]
   },
-  "routes": [],
   "mimeTypes": {
     ".json": "application/json",
     ".js": "text/javascript",
@@ -15,11 +20,5 @@
   },
   "globalHeaders": {
     "cache-control": "public, max-age=3600"
-  },
-  "responseOverrides": {
-    "404": {
-      "rewrite": "/index.html",
-      "statusCode": 200
-    }
   }
 }
