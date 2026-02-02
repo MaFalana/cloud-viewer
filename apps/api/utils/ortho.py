@@ -150,11 +150,43 @@ def raster_to_leaflet_overlay(
         bounds = [[south, west], [north, east]]
         logger.info(f"Extracted bounds: {bounds}")
         
-        # Step 3: Convert to WebP with tiled processing and downsampling
+        # Step 3: Convert to WebP with downsampling if needed
         # WebP provides 25-35% smaller file sizes than PNG with same quality
-        # Tiled processing reduces memory usage for large images
-        # Downsampling reduces file size for faster web display
-        logger.info(f"Converting to WebP format with tiled processing (downsampled to {ORTHO_DOWNSAMPLE_PERCENT}%)")
+        # WebP has a maximum dimension limit of 16383x16383 pixels
+        logger.info(f"Converting to WebP format")
+        
+        # Get original image dimensions
+        width = info.get('size', [0, 0])[0]
+        height = info.get('size', [0, 0])[1]
+        logger.info(f"Source image dimensions: {width}x{height}")
+        
+        # Calculate dimensions after configured downsampling
+        downsampled_width = int(width * ORTHO_DOWNSAMPLE_PERCENT / 100)
+        downsampled_height = int(height * ORTHO_DOWNSAMPLE_PERCENT / 100)
+        logger.info(f"After {ORTHO_DOWNSAMPLE_PERCENT}% downsampling: {downsampled_width}x{downsampled_height}")
+        
+        # WebP maximum dimensions are 16383x16383
+        MAX_WEBP_DIM = 16383
+        
+        # Calculate final scale to fit within WebP limits
+        final_scale_percent = ORTHO_DOWNSAMPLE_PERCENT
+        
+        if downsampled_width > MAX_WEBP_DIM or downsampled_height > MAX_WEBP_DIM:
+            # Need additional downsampling to fit within WebP limits
+            # Calculate scale factor relative to ORIGINAL dimensions
+            scale_for_width = MAX_WEBP_DIM / width
+            scale_for_height = MAX_WEBP_DIM / height
+            scale_factor = min(scale_for_width, scale_for_height)
+            final_scale_percent = int(scale_factor * 100)
+            
+            final_width = int(width * final_scale_percent / 100)
+            final_height = int(height * final_scale_percent / 100)
+            
+            logger.warning(f"Image exceeds WebP limits after {ORTHO_DOWNSAMPLE_PERCENT}% downsampling")
+            logger.info(f"Applying {final_scale_percent}% downsampling to fit within WebP limits")
+            logger.info(f"Final dimensions: {final_width}x{final_height}")
+        else:
+            logger.info(f"Image fits within WebP limits, using {ORTHO_DOWNSAMPLE_PERCENT}% downsampling")
         
         # Check if source has alpha band or nodata values
         has_alpha = info.get("bands", [{}])[-1].get("colorInterpretation") == "Alpha"
@@ -166,7 +198,7 @@ def raster_to_leaflet_overlay(
         common_options = [
             "gdal_translate",
             "-of", "WEBP",
-            "-outsize", f"{ORTHO_DOWNSAMPLE_PERCENT}%", "0",  # Downsample width, height auto-calculated
+            "-outsize", f"{final_scale_percent}%", "0",  # Downsample width, height auto-calculated
             "-co", "QUALITY=90",  # High quality WebP compression
             "-co", "LOSSLESS=NO",  # Use lossy compression for smaller files
         ]
