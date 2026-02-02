@@ -250,7 +250,6 @@ export function Dashboard({ basePath = '' }) {
     return (
         <>
             <HwcHeader 
-                title="Cloud Viewer"
                 basePath={basePath}
                 actions={
                     <DashboardActions

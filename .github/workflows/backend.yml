@@ -76,7 +76,7 @@ jobs:
                 MONGO_COLLECTION_NAME="${{ vars.AZURE_MONGO_NAME }}" \
                 AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
                 AZURE_STORAGE_CONTAINER_NAME="${{ vars.AZURE_MONGO_NAME }}" \
-                NAME="${{ vars.PROJECT_NAME }}"
+                NAME="${{ vars.AZURE_MONGO_NAME }}"
           else
             echo "Container App doesn't exist, creating in existing environment: $ENV_NAME"
             
