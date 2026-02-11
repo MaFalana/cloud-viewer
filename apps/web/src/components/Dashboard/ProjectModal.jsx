@@ -55,9 +55,17 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   useEffect(() => {
     if (isOpen) {
       if (project) {
-        // Edit mode
+        // Edit mode - ensure _id is always a string
+        let projectId = project._id;
+        // Handle case where _id might be an object (shouldn't happen but be defensive)
+        if (typeof projectId === 'object' && projectId !== null) {
+          projectId = projectId._id || projectId.id || String(projectId);
+        }
+        // Ensure it's a string
+        projectId = String(projectId || '');
+        
         setFormData({
-          _id: project._id,
+          _id: projectId,
           name: project.name || '',
           client: project.client || '',
           date: project.date ? new Date(project.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -335,9 +343,13 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   };
 
   const handleUpload = async (projectId = null) => {
-    const targetProjectId = projectId || project?._id;
+    // Use formData._id which has been properly extracted, or the passed projectId
+    const targetProjectId = projectId || formData._id;
     
-    if (!selectedFile || !targetProjectId) {
+    // Validate that targetProjectId is a string
+    if (!selectedFile || !targetProjectId || typeof targetProjectId !== 'string') {
+      console.error('Invalid project ID for upload:', targetProjectId);
+      setUploadError('Invalid project ID');
       return;
     }
 
@@ -455,8 +467,8 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   };
 
   const handleOrthoUpload = async (projectId = null) => {
-    // Ensure we get a string ID, not an object
-    const targetProjectId = projectId || formData._id || project?._id;
+    // Use formData._id which has been properly extracted, or the passed projectId
+    const targetProjectId = projectId || formData._id;
     
     // Validate that targetProjectId is a string
     if (!selectedOrthoFile || !targetProjectId || typeof targetProjectId !== 'string') {
