@@ -565,8 +565,17 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
           description: formData.description,
         });
         
-        // Extract project ID from response
-        const projectId = newProject._id || newProject.id || formData._id;
+        // Extract project ID from response - ensure it's a string
+        let projectId = newProject._id || newProject.id || formData._id;
+        // Handle case where _id might be an object with an id property
+        if (typeof projectId === 'object' && projectId !== null) {
+          projectId = projectId._id || projectId.id || String(projectId);
+        }
+        // Final safety check
+        if (typeof projectId !== 'string') {
+          console.error('Invalid project ID type:', typeof projectId, projectId);
+          throw new Error('Invalid project ID returned from server');
+        }
         
         // Call onSave callback to refresh dashboard
         if (onSave) {
