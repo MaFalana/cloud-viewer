@@ -33,12 +33,10 @@ RUN chmod +x /app/bin/PotreeConverter
 # Create symlink at /app/PotreeConverter for backward compatibility
 RUN ln -s /app/bin/PotreeConverter /app/PotreeConverter
 
-# Create symlink for liblaszip (system has liblaszip.so.8, PotreeConverter needs liblaszip.so)
-RUN ARCH=$(dpkg --print-architecture) && \
-    ln -s /usr/lib/${ARCH}-linux-gnu/liblaszip.so.8 /usr/lib/${ARCH}-linux-gnu/liblaszip.so || true
-
-# Set environment variable
+# Set environment variables
+# LD_LIBRARY_PATH includes /app/bin where the bundled liblaszip.so is located
 ENV POTREE_PATH=/app/bin/PotreeConverter
+ENV LD_LIBRARY_PATH=/app/bin:$LD_LIBRARY_PATH
 
 EXPOSE 8000
 
