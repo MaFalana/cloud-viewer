@@ -455,9 +455,13 @@ export function ProjectModal({ isOpen, onClose, project = null, onSave, showToas
   };
 
   const handleOrthoUpload = async (projectId = null) => {
-    const targetProjectId = projectId || project?._id;
+    // Ensure we get a string ID, not an object
+    const targetProjectId = projectId || formData._id || project?._id;
     
-    if (!selectedOrthoFile || !targetProjectId) {
+    // Validate that targetProjectId is a string
+    if (!selectedOrthoFile || !targetProjectId || typeof targetProjectId !== 'string') {
+      console.error('Invalid project ID for ortho upload:', targetProjectId);
+      setOrthoUploadError('Invalid project ID');
       return;
     }
 
