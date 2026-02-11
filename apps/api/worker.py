@@ -589,15 +589,20 @@ class JobWorker:
                 os.remove(job.file_path)
                 logger.info(f"Job {job.id}: Deleted local temp file: {job.file_path}")
             except Exception as e:
-                logger.error(f"Job {job.id}: Failed to delete local temp file {job.file_path}: {e}")
+                logger.warning(f"Job {job.id}: Failed to delete local temp file {job.file_path}: {e}")
+        elif job.file_path:
+            logger.debug(f"Job {job.id}: Local temp file already deleted or doesn't exist: {job.file_path}")
         
-        # Delete Azure job file
+        # Delete Azure job file - check existence first
         if job.azure_path:
             try:
-                self.db.az.delete_blob(job.azure_path)
-                logger.info(f"Job {job.id}: Deleted Azure job file: {job.azure_path}")
+                if self.db.az.blob_exists(job.azure_path):
+                    self.db.az.delete_blob(job.azure_path)
+                    logger.info(f"Job {job.id}: Deleted Azure job file: {job.azure_path}")
+                else:
+                    logger.debug(f"Job {job.id}: Azure job file already deleted or doesn't exist: {job.azure_path}")
             except Exception as e:
-                logger.error(f"Job {job.id}: Failed to delete Azure job file {job.azure_path}: {e}")
+                logger.debug(f"Job {job.id}: Azure job file cleanup skipped: {e}")
         
         # Delete partial Potree output files from Azure
         try:
@@ -614,14 +619,14 @@ class JobWorker:
                             self.db.az.delete_blob(blob.name)
                             deleted_count += 1
                         except Exception as e:
-                            logger.error(f"Job {job.id}: Failed to delete blob {blob.name}: {e}")
+                            logger.warning(f"Job {job.id}: Failed to delete blob {blob.name}: {e}")
                     
                     if deleted_count > 0:
                         logger.info(f"Job {job.id}: Deleted {deleted_count} partial Potree output files from Azure")
                 except Exception as e:
-                    logger.error(f"Job {job.id}: Failed to list blobs for cleanup: {e}")
+                    logger.warning(f"Job {job.id}: Failed to list blobs for cleanup: {e}")
         except Exception as e:
-            logger.error(f"Job {job.id}: Failed to cleanup Potree output files: {e}")
+            logger.warning(f"Job {job.id}: Failed to cleanup Potree output files: {e}")
         
         # Delete local Potree output directory if provided
         if output_dir and os.path.exists(output_dir):
@@ -629,7 +634,7 @@ class JobWorker:
                 shutil.rmtree(output_dir)
                 logger.info(f"Job {job.id}: Deleted local Potree output directory: {output_dir}")
             except Exception as e:
-                logger.error(f"Job {job.id}: Failed to delete output directory {output_dir}: {e}")
+                logger.warning(f"Job {job.id}: Failed to delete output directory {output_dir}: {e}")
         
         logger.info(f"Job {job.id}: Cleanup completed for cancelled job")
     
@@ -640,7 +645,7 @@ class JobWorker:
         This method accepts a variable number of file paths and attempts to delete
         each one. It also deletes the Azure job file and any associated world files.
         All operations are wrapped in error handling to ensure failures don't prevent
-        other cleanup operations.
+        other cleanup operations or affect job status.
         
         Args:
             job_id: Job ID for the Azure job file cleanup
@@ -655,25 +660,36 @@ class JobWorker:
                     os.remove(file_path)
                     logger.info(f"Job {job_id}: Deleted local file: {file_path}")
                 except Exception as e:
-                    logger.error(f"Job {job_id}: Failed to delete {file_path}: {e}")
+                    logger.warning(f"Job {job_id}: Failed to delete {file_path}: {e}")
+            elif file_path:
+                logger.debug(f"Job {job_id}: Local file already deleted or doesn't exist: {file_path}")
         
-        # Delete Azure job file (main file)
+        # Delete Azure job file (main file) - check existence first
         try:
-            self.db.az.delete_job_file(job_id)
-            logger.info(f"Job {job_id}: Deleted Azure job file")
+            job_blob_name = f"jobs/{job_id}.tif"  # or whatever extension
+            # Try common ortho extensions
+            for ext in ['.tif', '.tiff', '.jpg', '.jpeg', '.png']:
+                blob_name = f"jobs/{job_id}{ext}"
+                if self.db.az.blob_exists(blob_name):
+                    self.db.az.delete_blob(blob_name)
+                    logger.info(f"Job {job_id}: Deleted Azure job file: {blob_name}")
+                    break
+            else:
+                logger.debug(f"Job {job_id}: No Azure job file found to delete")
         except Exception as e:
-            logger.error(f"Job {job_id}: Failed to delete Azure job file: {e}")
+            logger.debug(f"Job {job_id}: Azure job file cleanup skipped: {e}")
         
         # Delete Azure world files if they exist
-        world_extensions = ['.jgw', '.pgw', '.wld', '.jpgw', '.pngw']
+        world_extensions = ['.jgw', '.pgw', '.wld', '.jpgw', '.pngw', '.tfw']
         for world_ext in world_extensions:
             try:
                 world_blob_name = f"jobs/{job_id}{world_ext}"
-                self.db.az.delete_blob(world_blob_name)
-                logger.info(f"Job {job_id}: Deleted Azure world file: {world_blob_name}")
-            except Exception:
-                # World file doesn't exist, ignore
-                pass
+                if self.db.az.blob_exists(world_blob_name):
+                    self.db.az.delete_blob(world_blob_name)
+                    logger.info(f"Job {job_id}: Deleted Azure world file: {world_blob_name}")
+            except Exception as e:
+                # World file doesn't exist or error, ignore
+                logger.debug(f"Job {job_id}: World file cleanup skipped for {world_blob_name}: {e}")
         
         logger.info(f"Job {job_id}: Ortho file cleanup completed")
     
@@ -1203,6 +1219,9 @@ class JobWorker:
         - Local temporary file (job.file_path)
         - Azure job file (job.azure_path)
         
+        Cleanup failures are logged but do not affect job status since
+        the actual processing has already completed successfully.
+        
         Args:
             job: Job object containing file paths to clean up
         """
@@ -1215,13 +1234,20 @@ class JobWorker:
                 logger.info(f"Deleted local temp file: {job.file_path}")
             except Exception as e:
                 logger.warning(f"Failed to delete local temp file {job.file_path}: {e}")
+        elif job.file_path:
+            logger.debug(f"Local temp file already deleted or doesn't exist: {job.file_path}")
         
-        # Delete Azure job file
+        # Delete Azure job file (if it exists)
         if job.azure_path:
             try:
-                self.db.az.delete_blob(job.azure_path)
-                logger.info(f"Deleted Azure job file: {job.azure_path}")
+                # Check if blob exists before attempting deletion
+                if self.db.az.blob_exists(job.azure_path):
+                    self.db.az.delete_blob(job.azure_path)
+                    logger.info(f"Deleted Azure job file: {job.azure_path}")
+                else:
+                    logger.debug(f"Azure job file already deleted or doesn't exist: {job.azure_path}")
             except Exception as e:
-                logger.warning(f"Failed to delete Azure job file {job.azure_path}: {e}")
+                # Log as debug since blob might have been deleted already
+                logger.debug(f"Azure job file cleanup skipped for {job.azure_path}: {e}")
         
         logger.info(f"Cleanup completed for job {job.id}")

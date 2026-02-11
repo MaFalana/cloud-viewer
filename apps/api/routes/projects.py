@@ -645,20 +645,26 @@ async def upload_ortho(
                 )
             logger.info(f"World file provided: {world_filename}")
         
-        # Validate file size (30GB limit)
+        # Validate file size (30GB limit) - use try/except for robustness
         MAX_FILE_SIZE = 30 * 1024 * 1024 * 1024  # 30GB in bytes
-        file.file.seek(0, 2)  # Seek to end of file
-        file_size = file.file.tell()
-        file.file.seek(0)  # Reset to beginning
-        
-        if file_size > MAX_FILE_SIZE:
-            logger.warning(f"File too large for ortho upload: {file_size} bytes")
-            raise HTTPException(
-                status_code=413,
-                detail=f"File size exceeds 30GB limit (uploaded: {file_size / (1024**3):.2f}GB)"
-            )
-        
-        logger.info(f"Ortho file validated: {filename}, size: {file_size / (1024**3):.2f}GB")
+        file_size = 0
+        try:
+            file.file.seek(0, 2)  # Seek to end of file
+            file_size = file.file.tell()
+            file.file.seek(0)  # Reset to beginning
+            
+            if file_size > MAX_FILE_SIZE:
+                logger.warning(f"File too large for ortho upload: {file_size} bytes")
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File size exceeds 30GB limit (uploaded: {file_size / (1024**3):.2f}GB)"
+                )
+            
+            logger.info(f"Ortho file validated: {filename}, size: {file_size / (1024**3):.2f}GB")
+        except Exception as e:
+            # If we can't determine size, log warning but continue
+            logger.warning(f"Could not determine file size, proceeding with upload: {e}")
+            file.file.seek(0)  # Ensure we're at the beginning
         
         # Generate job ID
         job_id = str(uuid.uuid4())
@@ -672,13 +678,28 @@ async def upload_ortho(
         elif filename.endswith('.png'):
             file_ext = '.png'
         
-        # Save main file to temporary location
+        # Save main file to temporary location with chunked writing for large files
         temp_file_path = os.path.join(tempfile.gettempdir(), f"{job_id}{file_ext}")
-        with open(temp_file_path, "wb") as temp_file:
-            content = await file.read()
-            temp_file.write(content)
-        
-        logger.info(f"Saved ortho file to temporary location: {temp_file_path}")
+        try:
+            with open(temp_file_path, "wb") as temp_file:
+                # Read and write in chunks to avoid memory issues with large files
+                chunk_size = 10 * 1024 * 1024  # 10MB chunks
+                while True:
+                    chunk = await file.read(chunk_size)
+                    if not chunk:
+                        break
+                    temp_file.write(chunk)
+            
+            logger.info(f"Saved ortho file to temporary location: {temp_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to save ortho file to temp location: {e}", exc_info=True)
+            # Clean up partial file if it exists
+            if os.path.exists(temp_file_path):
+                try:
+                    os.remove(temp_file_path)
+                except:
+                    pass
+            raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {str(e)}")
         
         # Save world file if provided (same base name as main file)
         world_file_path = None
@@ -687,28 +708,81 @@ async def upload_ortho(
             world_ext = os.path.splitext(world_filename)[1]
             world_file_path = os.path.join(tempfile.gettempdir(), f"{job_id}{world_ext}")
             
-            with open(world_file_path, "wb") as temp_world:
-                world_content = await world_file.read()
-                temp_world.write(world_content)
-            
-            logger.info(f"Saved world file to temporary location: {world_file_path}")
+            try:
+                with open(world_file_path, "wb") as temp_world:
+                    world_content = await world_file.read()
+                    temp_world.write(world_content)
+                
+                logger.info(f"Saved world file to temporary location: {world_file_path}")
+            except Exception as e:
+                logger.error(f"Failed to save world file: {e}", exc_info=True)
+                # Clean up main file and partial world file
+                if os.path.exists(temp_file_path):
+                    try:
+                        os.remove(temp_file_path)
+                    except:
+                        pass
+                if os.path.exists(world_file_path):
+                    try:
+                        os.remove(world_file_path)
+                    except:
+                        pass
+                raise HTTPException(status_code=500, detail=f"Failed to save world file: {str(e)}")
         
-        # Upload main file to Azure temporary storage
+        # Upload main file to Azure temporary storage with error handling
         azure_blob_name = f"jobs/{job_id}{file_ext}"
-        DB.az.upload_file(temp_file_path, azure_blob_name)
-        logger.info(f"Uploaded ortho to Azure: {azure_blob_name}")
+        try:
+            DB.az.upload_file(temp_file_path, azure_blob_name)
+            logger.info(f"Uploaded ortho to Azure: {azure_blob_name}")
+        except Exception as e:
+            logger.error(f"Failed to upload ortho to Azure: {e}", exc_info=True)
+            # Clean up temp files
+            if os.path.exists(temp_file_path):
+                try:
+                    os.remove(temp_file_path)
+                except:
+                    pass
+            if world_file_path and os.path.exists(world_file_path):
+                try:
+                    os.remove(world_file_path)
+                except:
+                    pass
+            raise HTTPException(status_code=500, detail=f"Failed to upload file to Azure: {str(e)}")
         
         # Upload world file to Azure if provided
         if world_file_path:
             world_ext = os.path.splitext(world_file_path)[1]
             azure_world_blob_name = f"jobs/{job_id}{world_ext}"
-            DB.az.upload_file(world_file_path, azure_world_blob_name)
-            logger.info(f"Uploaded world file to Azure: {azure_world_blob_name}")
+            try:
+                DB.az.upload_file(world_file_path, azure_world_blob_name)
+                logger.info(f"Uploaded world file to Azure: {azure_world_blob_name}")
+            except Exception as e:
+                logger.error(f"Failed to upload world file to Azure: {e}", exc_info=True)
+                # Clean up temp files and main Azure blob
+                if os.path.exists(temp_file_path):
+                    try:
+                        os.remove(temp_file_path)
+                    except:
+                        pass
+                if os.path.exists(world_file_path):
+                    try:
+                        os.remove(world_file_path)
+                    except:
+                        pass
+                try:
+                    DB.az.delete_blob(azure_blob_name)
+                except:
+                    pass
+                raise HTTPException(status_code=500, detail=f"Failed to upload world file to Azure: {str(e)}")
         
-        # Clean up temporary files
-        os.remove(temp_file_path)
-        if world_file_path:
-            os.remove(world_file_path)
+        # Clean up temporary files after successful upload
+        try:
+            os.remove(temp_file_path)
+            if world_file_path:
+                os.remove(world_file_path)
+            logger.info("Cleaned up temporary files after successful upload")
+        except Exception as e:
+            logger.warning(f"Failed to clean up temporary files: {e}")
         
         # Create job in database
         from models.Job import Job

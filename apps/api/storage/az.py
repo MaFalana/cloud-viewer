@@ -38,9 +38,30 @@ class AzureStorageManager:
             print(f"Created public Azure container: {container_name}")
 
     # ---------- Upload ----------
-    def upload_file(self, file_path: str, blob_name: str):
+    def upload_file(self, file_path: str, blob_name: str, timeout: int = 3600):
+        """
+        Upload a file to Azure Blob Storage with chunked upload for large files.
+        
+        Uses the blob client's upload_blob method which automatically handles
+        chunking for files larger than 256MB. This prevents memory issues and
+        provides better reliability for large file uploads.
+        
+        Args:
+            file_path: Local file path to upload
+            blob_name: Destination blob name in container
+            timeout: Upload timeout in seconds (default: 3600 = 1 hour)
+        """
+        blob_client = self.container_client.get_blob_client(blob_name)
+        
         with open(file_path, "rb") as data:
-            self.container_client.upload_blob(name=blob_name, data=data)
+            # Azure SDK automatically chunks files > 256MB
+            # max_concurrency allows parallel chunk uploads
+            blob_client.upload_blob(
+                data,
+                overwrite=True,
+                timeout=timeout,
+                max_concurrency=4  # Upload up to 4 chunks in parallel
+            )
         print(f"Uploaded {file_path} as blob {blob_name}")
 
     def upload_folder(self, folder_path: str, blob_prefix: str = ""):
@@ -122,6 +143,22 @@ class AzureStorageManager:
             Public URL (no authentication required)
         """
         return f"https://{self.account_name}.blob.core.windows.net/{self.container_name}/{blob_name}"
+    def blob_exists(self, blob_name: str) -> bool:
+        """
+        Check if a blob exists in the container.
+
+        Args:
+            blob_name: Name of the blob to check
+
+        Returns:
+            True if blob exists, False otherwise
+        """
+        try:
+            blob_client = self.container_client.get_blob_client(blob_name)
+            blob_client.get_blob_properties()
+            return True
+        except Exception:
+            return False
 
     # ---------- Download / Delete ----------
     def download_file(self, blob_name: str, download_path: str):
