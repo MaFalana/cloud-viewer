@@ -7,7 +7,14 @@
   ],
   "navigationFallback": {
     "rewrite": "/_fallback/index.html",
-    "exclude": ["/assets/*", "/potree/*", "/index.html", "/viewer-example/*", "*.{css,scss,js,png,gif,ico,jpg,svg,wasm}"]
+    "exclude": [
+      "/_astro/*",
+      "/assets/*",
+      "/potree/*",
+      "/index.html",
+      "/viewer-example/*",
+      "*.{css,scss,js,png,gif,ico,jpg,svg,wasm}"
+    ]
   },
   "mimeTypes": {
     ".json": "application/json",
