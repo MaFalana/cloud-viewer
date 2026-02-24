@@ -50,10 +50,15 @@ export function HwcPotree({
       return;
     }
 
+    // Set Potree resource path BEFORE any Potree objects are created
+    if (window.Potree) {
+      window.Potree.resourcePath = `${basePath}/potree/1.8.2/build/potree/resources`;
+    }
+
     // Load proj4 if not already loaded (synchronous check)
     if (!window.proj4) {
       const script = document.createElement('script');
-      script.src = '/potree/1.8.2/libs/proj4/proj4.js';
+      script.src = `${basePath}/potree/1.8.2/libs/proj4/proj4.js`;
       script.async = false;
       document.head.appendChild(script);
     }
@@ -112,11 +117,6 @@ export function HwcPotree({
 
         cesiumViewer.resize();
         viewersRef.current.cesiumViewer = cesiumViewer;
-
-        // Set Potree resource path for icons and assets
-        if (window.Potree) {
-          window.Potree.resourcePath = `${basePath}/potree/1.8.2/build/potree/resources`;
-        }
 
         // Create Potree viewer (foreground layer)
         setLoadingStatus('Loading point cloud...');
