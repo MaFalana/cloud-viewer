@@ -113,6 +113,11 @@ export function HwcPotree({
         cesiumViewer.resize();
         viewersRef.current.cesiumViewer = cesiumViewer;
 
+        // Set Potree resource path for icons and assets
+        if (window.Potree) {
+          window.Potree.resourcePath = `${basePath}/potree/1.8.2/build/potree/resources`;
+        }
+
         // Create Potree viewer (foreground layer)
         setLoadingStatus('Loading point cloud...');
 
@@ -295,7 +300,7 @@ export function HwcPotree({
   return (
     <div className="hwc-potree-container">
       <PotreeAttribution baseLayer={baseLayer} />
-      
+
       {isLoading && (
         <div className="hwc-potree-loading">
           <div className="spinner" />
@@ -367,7 +372,7 @@ function syncCameraWithProj4(potreeViewer, cesiumViewer) {
 
     const maxDistance = 10000000;
     if (Math.abs(pPos.x) > maxDistance || Math.abs(pPos.y) > maxDistance ||
-        Math.abs(pTarget.x) > maxDistance || Math.abs(pTarget.y) > maxDistance) {
+      Math.abs(pTarget.x) > maxDistance || Math.abs(pTarget.y) > maxDistance) {
       return;
     }
 
@@ -375,7 +380,7 @@ function syncCameraWithProj4(potreeViewer, cesiumViewer) {
     const [targetLon, targetLat] = window.proj4Transform.forward([pTarget.x, pTarget.y]);
 
     if (!isFinite(camLon) || !isFinite(camLat) ||
-        Math.abs(camLon) > 180 || Math.abs(camLat) > 90) {
+      Math.abs(camLon) > 180 || Math.abs(camLat) > 90) {
       return;
     }
 

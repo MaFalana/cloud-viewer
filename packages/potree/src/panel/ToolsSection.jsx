@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 
 // Potree icon helper - handles both SVG and PNG
-const PotreeIcon = ({ name, className = '' }) => {
+const PotreeIcon = ({ name, className = '', basePath = '' }) => {
   const ext = name === 'angle' ? 'png' : 'svg';
   return (
-    <img 
-      src={`/potree/1.8.2/build/potree/resources/icons/${name}.${ext}`} 
+    <img
+      src={`${basePath}/potree/1.8.2/build/potree/resources/icons/${name}.${ext}`}
       alt={name}
       className={`potree-icon ${className}`}
       style={{ width: '20px', height: '20px', filter: 'invert(1)' }}
@@ -13,7 +13,7 @@ const PotreeIcon = ({ name, className = '' }) => {
   );
 };
 
-export function ToolsSection({ potreeViewer }) {
+export function ToolsSection({ potreeViewer, basePath = '' }) {
   const [activeTool, setActiveTool] = useState(null);
   const [measurements, setMeasurements] = useState([]);
   const [isReady, setIsReady] = useState(false);
@@ -123,95 +123,95 @@ export function ToolsSection({ potreeViewer }) {
             name: 'Distance'
           });
           break;
-      
-      case 'polyline':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: true,
-          showAngles: false,
-          showArea: false,
-          closed: false,
-          maxMarkers: Infinity,
-          name: 'Polyline'
-        });
-        break;
-      
-      case 'point':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: false,
-          showCoordinates: true,
-          showAngles: false,
-          showArea: false,
-          closed: false,
-          maxMarkers: 1,
-          name: 'Point'
-        });
-        break;
-      
-      case 'height':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: false,
-          showHeight: true,
-          showAngles: false,
-          showArea: false,
-          closed: false,
-          maxMarkers: 2,
-          name: 'Height'
-        });
-        break;
-      
-      case 'area':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: false,
-          showAngles: false,
-          showArea: true,
-          closed: true,
-          maxMarkers: Infinity,
-          name: 'Area'
-        });
-        break;
-      
-      case 'angle':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: false,
-          showAngles: true,
-          showArea: false,
-          closed: false,
-          maxMarkers: 3,
-          name: 'Angle'
-        });
-        break;
-      
-      case 'circle':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: false,
-          showRadius: true,
-          showArea: true,
-          closed: true,
-          maxMarkers: 3,
-          name: 'Circle'
-        });
-        break;
-      
-      case 'azimuth':
-        potreeViewer.measuringTool.startInsertion({
-          showDistances: false,
-          showAzimuth: true,
-          showAngles: false,
-          showArea: false,
-          closed: false,
-          maxMarkers: 2,
-          name: 'Azimuth'
-        });
-        break;
-      
-      case 'volume':
-        if (potreeViewer.volumeTool) {
-          potreeViewer.volumeTool.startInsertion();
-        }
-        break;
-        
-      default:
-        break;
+
+        case 'polyline':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: true,
+            showAngles: false,
+            showArea: false,
+            closed: false,
+            maxMarkers: Infinity,
+            name: 'Polyline'
+          });
+          break;
+
+        case 'point':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: false,
+            showCoordinates: true,
+            showAngles: false,
+            showArea: false,
+            closed: false,
+            maxMarkers: 1,
+            name: 'Point'
+          });
+          break;
+
+        case 'height':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: false,
+            showHeight: true,
+            showAngles: false,
+            showArea: false,
+            closed: false,
+            maxMarkers: 2,
+            name: 'Height'
+          });
+          break;
+
+        case 'area':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: false,
+            showAngles: false,
+            showArea: true,
+            closed: true,
+            maxMarkers: Infinity,
+            name: 'Area'
+          });
+          break;
+
+        case 'angle':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: false,
+            showAngles: true,
+            showArea: false,
+            closed: false,
+            maxMarkers: 3,
+            name: 'Angle'
+          });
+          break;
+
+        case 'circle':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: false,
+            showRadius: true,
+            showArea: true,
+            closed: true,
+            maxMarkers: 3,
+            name: 'Circle'
+          });
+          break;
+
+        case 'azimuth':
+          potreeViewer.measuringTool.startInsertion({
+            showDistances: false,
+            showAzimuth: true,
+            showAngles: false,
+            showArea: false,
+            closed: false,
+            maxMarkers: 2,
+            name: 'Azimuth'
+          });
+          break;
+
+        case 'volume':
+          if (potreeViewer.volumeTool) {
+            potreeViewer.volumeTool.startInsertion();
+          }
+          break;
+
+        default:
+          break;
       }
     } catch (err) {
       setActiveTool(null);
@@ -220,7 +220,7 @@ export function ToolsSection({ potreeViewer }) {
 
   const removeMeasurement = (measurement) => {
     if (!potreeViewer) return;
-    
+
     const scene = potreeViewer.scene;
     if (scene) {
       scene.removeMeasurement(measurement);
@@ -229,15 +229,15 @@ export function ToolsSection({ potreeViewer }) {
   };
 
   const tools = [
-    { id: 'distance', label: 'Distance', icon: <PotreeIcon name="distance" /> },
-    { id: 'polyline', label: 'Polyline', icon: <PotreeIcon name="distance" /> },
-    { id: 'point', label: 'Point', icon: <PotreeIcon name="point" /> },
-    { id: 'height', label: 'Height', icon: <PotreeIcon name="height" /> },
-    { id: 'area', label: 'Area', icon: <PotreeIcon name="area" /> },
-    { id: 'angle', label: 'Angle', icon: <PotreeIcon name="angle" /> },
-    { id: 'circle', label: 'Circle', icon: <PotreeIcon name="circle" /> },
-    { id: 'azimuth', label: 'Azimuth', icon: <PotreeIcon name="azimuth" /> },
-    { id: 'volume', label: 'Volume', icon: <PotreeIcon name="volume" /> },
+    { id: 'distance', label: 'Distance', icon: <PotreeIcon name="distance" basePath={basePath} /> },
+    { id: 'polyline', label: 'Polyline', icon: <PotreeIcon name="distance" basePath={basePath} /> },
+    { id: 'point', label: 'Point', icon: <PotreeIcon name="point" basePath={basePath} /> },
+    { id: 'height', label: 'Height', icon: <PotreeIcon name="height" basePath={basePath} /> },
+    { id: 'area', label: 'Area', icon: <PotreeIcon name="area" basePath={basePath} /> },
+    { id: 'angle', label: 'Angle', icon: <PotreeIcon name="angle" basePath={basePath} /> },
+    { id: 'circle', label: 'Circle', icon: <PotreeIcon name="circle" basePath={basePath} /> },
+    { id: 'azimuth', label: 'Azimuth', icon: <PotreeIcon name="azimuth" basePath={basePath} /> },
+    { id: 'volume', label: 'Volume', icon: <PotreeIcon name="volume" basePath={basePath} /> },
   ];
 
   return (
@@ -305,9 +305,9 @@ export function ToolsSection({ potreeViewer }) {
 function MeasurementItem({ measurement, onRemove }) {
   const getMeasurementInfo = () => {
     if (!measurement) return { type: 'Unknown', value: '' };
-    
+
     const name = measurement.name || 'Measurement';
-    
+
     // Try to get measurement values safely
     try {
       if (typeof measurement.getTotalDistance === 'function') {
@@ -319,7 +319,7 @@ function MeasurementItem({ measurement, onRemove }) {
     } catch (e) {
       // Ignore
     }
-    
+
     try {
       if (typeof measurement.getArea === 'function') {
         const area = measurement.getArea();
@@ -330,23 +330,23 @@ function MeasurementItem({ measurement, onRemove }) {
     } catch (e) {
       // Ignore
     }
-    
+
     // For point measurements, try to get coordinates
     try {
       if (measurement.points && measurement.points.length > 0) {
         const point = measurement.points[0];
         if (point && point.position) {
           const pos = point.position;
-          return { 
-            type: name, 
-            value: `X: ${pos.x.toFixed(2)}, Y: ${pos.y.toFixed(2)}, Z: ${pos.z.toFixed(2)}` 
+          return {
+            type: name,
+            value: `X: ${pos.x.toFixed(2)}, Y: ${pos.y.toFixed(2)}, Z: ${pos.z.toFixed(2)}`
           };
         }
       }
     } catch (e) {
       // Ignore
     }
-    
+
     return { type: name, value: 'In progress...' };
   };
 
@@ -364,7 +364,7 @@ function MeasurementItem({ measurement, onRemove }) {
         aria-label="Remove measurement"
         title="Remove"
       >
-        <PotreeIcon name="remove" />
+        <PotreeIcon name="remove" basePath={basePath} />
       </button>
     </div>
   );

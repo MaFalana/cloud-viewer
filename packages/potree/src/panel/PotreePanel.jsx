@@ -8,21 +8,22 @@ import { ExportSection } from './ExportSection';
 import './panel.css';
 
 // Potree icon helper
-const PotreeIcon = ({ name }) => (
-  <img 
-    src={`/potree/1.8.2/build/potree/resources/icons/${name}.svg`}
+const PotreeIcon = ({ name, basePath = '' }) => (
+  <img
+    src={`${basePath}/potree/1.8.2/build/potree/resources/icons/${name}.svg`}
     alt={name}
     className="panel-section-icon"
   />
 );
 
-export function PotreePanel({ 
-  potreeViewer, 
-  cesiumViewer, 
-  isOpen, 
+export function PotreePanel({
+  potreeViewer,
+  cesiumViewer,
+  isOpen,
   onToggle,
   position = "left",
-  title = "Point Cloud Tools"
+  title = "Point Cloud Tools",
+  basePath = ""
 }) {
   const [expandedSections, setExpandedSections] = useState({
     tools: true,
@@ -50,17 +51,17 @@ export function PotreePanel({
       {/* Tools Section */}
       <PanelSection
         title="Tools"
-        icon={<PotreeIcon name="distance" />}
+        icon={<PotreeIcon name="distance" basePath={basePath} />}
         isExpanded={expandedSections.tools}
         onToggle={() => toggleSection('tools')}
       >
-        <ToolsSection potreeViewer={potreeViewer} />
+        <ToolsSection potreeViewer={potreeViewer} basePath={basePath} />
       </PanelSection>
 
       {/* Appearance Section */}
       <PanelSection
         title="Appearance"
-        icon={<PotreeIcon name="eye" />}
+        icon={<PotreeIcon name="eye" basePath={basePath} />}
         isExpanded={expandedSections.appearance}
         onToggle={() => toggleSection('appearance')}
       >
@@ -70,7 +71,7 @@ export function PotreePanel({
       {/* Camera Section */}
       <PanelSection
         title="Camera"
-        icon={<PotreeIcon name="perspective-camera" />}
+        icon={<PotreeIcon name="perspective-camera" basePath={basePath} />}
         isExpanded={expandedSections.camera}
         onToggle={() => toggleSection('camera')}
       >
@@ -80,7 +81,7 @@ export function PotreePanel({
       {/* Scene Section */}
       <PanelSection
         title="Scene"
-        icon={<PotreeIcon name="cloud" />}
+        icon={<PotreeIcon name="cloud" basePath={basePath} />}
         isExpanded={expandedSections.scene}
         onToggle={() => toggleSection('scene')}
       >
@@ -90,7 +91,7 @@ export function PotreePanel({
       {/* Export Section */}
       <PanelSection
         title="Export & Share"
-        icon={<PotreeIcon name="picture" />}
+        icon={<PotreeIcon name="picture" basePath={basePath} />}
         isExpanded={expandedSections.export}
         onToggle={() => toggleSection('export')}
       >
