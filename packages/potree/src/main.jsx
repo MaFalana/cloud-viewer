@@ -50,16 +50,6 @@ export function HwcPotree({
       return;
     }
 
-    // Set Potree resource path BEFORE any Potree objects are created
-    if (window.Potree) {
-      window.Potree.resourcePath = `${basePath}/potree/1.8.2/build/potree/resources`;
-      console.log('Set Potree.resourcePath to:', window.Potree.resourcePath);
-    }
-    if (Potree) {
-      Potree.resourcePath = `${basePath}/potree/1.8.2/build/potree/resources`;
-      console.log('Set Potree.resourcePath to:', Potree.resourcePath);
-    }
-
     // Load proj4 if not already loaded (synchronous check)
     if (!window.proj4) {
       const script = document.createElement('script');
