@@ -21,7 +21,7 @@ export function ViewerApp({ mapTilerKey, basePath = '' }) {
       // Extract project ID from URL
       const pathParts = window.location.pathname.split('/').filter(Boolean);
       const projectId = pathParts[pathParts.length - 1];
-      
+
       if (!projectId) {
         setError('No project ID provided');
         setLoading(false);
@@ -30,12 +30,12 @@ export function ViewerApp({ mapTilerKey, basePath = '' }) {
 
       try {
         const projectData = await projectAPI.getById(projectId);
-        
+
         // API returns cloud as a string URL
         if (!projectData.cloud) {
           throw new Error('No point cloud data available for this project');
         }
-        
+
         setProject(projectData);
         setError(null);
       } catch (err) {
@@ -81,7 +81,7 @@ export function ViewerApp({ mapTilerKey, basePath = '' }) {
   return (
     <>
       <HwcHeader title={project.name} basePath={basePath} />
-      
+
       <div style={{ position: 'relative', width: '100%', height: 'calc(100vh - var(--header-h))' }}>
         {/* Mode Toggle (2D/3D) */}
         <div className="mode-toggle">
@@ -191,13 +191,14 @@ export function ViewerApp({ mapTilerKey, basePath = '' }) {
                   potreeViewer={viewers.potreeViewer}
                   cesiumViewer={viewers.cesiumViewer}
                 />
-                
+
                 <PotreePanel
                   potreeViewer={viewers.potreeViewer}
                   cesiumViewer={viewers.cesiumViewer}
                   isOpen={isPanelOpen}
                   onToggle={() => setIsPanelOpen(!isPanelOpen)}
                   position="left"
+                  basePath={basePath}
                 />
               </>
             )}
