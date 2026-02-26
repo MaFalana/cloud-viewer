@@ -29,7 +29,7 @@ export function HwcPotree({
   mapTilerKey,
   onViewerReady,
   orthoUrl,
-  basePath = 'cloud-viewer'
+  basePath = '/cloud-viewer'
 }) {
   const potreeContainerRef = useRef(null);
   const cesiumContainerRef = useRef(null);
