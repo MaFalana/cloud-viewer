@@ -294,6 +294,7 @@ export function ToolsSection({ potreeViewer, basePath = '' }) {
               key={index}
               measurement={measurement}
               onRemove={() => removeMeasurement(measurement)}
+              basePath={basePath}
             />
           ))}
         </div>
@@ -302,7 +303,7 @@ export function ToolsSection({ potreeViewer, basePath = '' }) {
   );
 }
 
-function MeasurementItem({ measurement, onRemove }) {
+function MeasurementItem({ measurement, onRemove, basePath = '' }) {
   const getMeasurementInfo = () => {
     if (!measurement) return { type: 'Unknown', value: '' };
 
